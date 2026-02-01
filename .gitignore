@@ -1,0 +1,111 @@
+# ------------------------------
+# Operating system files
+# ------------------------------
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+*.swp
+*.swo
+
+# Linux
+*~
+.nfs*
+
+# ------------------------------
+# Build artifacts
+# ------------------------------
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CMakeScripts/
+Makefile
+build/
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
+*.dir/
+*.obj
+*.o
+*.so
+*.dll
+*.lib
+*.exp
+*.pdb
+*.idb
+*.ipdb
+*.iobj
+*.tlog/
+*.lastbuildstate
+*.pch
+*.sdf
+*.opensdf
+*.ipch
+*.log
+
+# ------------------------------
+# IDE / Editor
+# ------------------------------
+# CLion
+cmake-build-*/
+.idea/
+*.iml
+*.iws
+*.swp
+*.user
+*.workspace
+
+# VS / Visual Studio
+.vs/
+*.vcxproj.user
+*.vcxproj.filters
+*.vcxproj.*.user
+*.ncb
+*.suo
+*.sln.docstates
+*.opensdf
+*.cachefile
+
+# VS Code
+.vscode/
+.history/
+
+# ------------------------------
+# Package managers
+# ------------------------------
+# vcpkg
+installed/
+buildtrees/
+packages/
+downloads/
+
+# FetchContent / external
+_deps/
+*_src/
+*_build/
+
+# ------------------------------
+# Logs
+# ------------------------------
+*.log
+
+# ------------------------------
+# Temporary files
+# ------------------------------
+*.tmp
+*.bak
+*.swp
+*.DS_Store
