@@ -1,0 +1,50 @@
+//
+// Created by Misha on 2/3/2026.
+//
+
+#ifndef DXGRAPHICSENGINE_WINDOWSYSTEM_H
+#define DXGRAPHICSENGINE_WINDOWSYSTEM_H
+
+#define GLFW_EXPOSE_NATIVE_WIN32
+
+#include "engine/DxUtils.h"
+#include "engine/EngineContext.h"
+#include "engine/systems/SystemBase.h"
+#include "engine/Globals.h"
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
+
+class WindowSystem: public SystemBase {
+    GLFWwindow* window = nullptr;
+    HWND windowHandle = nullptr;
+public:
+    explicit WindowSystem() = default;
+
+    void Initialize(const EngineContext& ctx) {
+        if (!glfwInit())
+            throw std::runtime_error("Failed to initialize glfw");
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // important for DX12
+
+        window = glfwCreateWindow(
+            static_cast<int32_t>(ctx.windowConfig.width), static_cast<int32_t>(ctx.windowConfig.height), Globals::PROJ_NAME.data(), nullptr, nullptr
+        );
+
+        windowHandle = glfwGetWin32Window(window);
+    }
+
+    void StartPolling() const {
+        while (!glfwWindowShouldClose(window))
+        {
+            glfwPollEvents();
+        }
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
+
+    [[nodiscard]] HWND GetWindowHandle() const {
+        return windowHandle;
+    }
+};
+
+#endif //DXGRAPHICSENGINE_WINDOWSYSTEM_H

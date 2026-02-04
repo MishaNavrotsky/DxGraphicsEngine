@@ -7,6 +7,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(DxGraphicsEngine
         main.cpp
+        engine/systems/window/SwapChainSystem.h
+        engine/Types.h
+        engine/Globals.h
+        engine/libs/Registry.h
+        engine/systems/SystemBase.h
+        engine/EngineContext.h
+        engine/DxUtils.h
+        engine/systems/QueueSystem.h
+        engine/systems/window/WindowSystem.h
+)
+
+target_include_directories(DxGraphicsEngine
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 include(FetchContent)
