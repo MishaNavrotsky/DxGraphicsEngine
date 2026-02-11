@@ -13,11 +13,13 @@
 
 struct WindowConfig {
     std::uint32_t width = 1280, height = 720;
+    bool vsync = false;
     HWND windowHandle = nullptr;
 };
 
 struct DXContext {
     dx::ComPtr<ID3D12Device> device;
+    dx::ComPtr<IDXGIFactory6> factory;
     std::uint32_t bufferCount = 3;
 };
 
@@ -25,11 +27,7 @@ struct EngineContext {
     WindowConfig windowConfig;
     DXContext dx;
     Registry<SystemBase> systems;
-    std::atomic<bool> running{true};
-
-    ~EngineContext() {
-        running.store(false, std::memory_order_release);
-    }
+    std::stop_token stopToken;
 };
 
 #endif //DXGRAPHICSENGINE_ENGINECONTEXT_H

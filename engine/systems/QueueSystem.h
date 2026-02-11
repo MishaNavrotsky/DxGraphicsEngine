@@ -4,7 +4,6 @@
 
 #ifndef DXGRAPHICSENGINE_QUEUESYSTEM_H
 #define DXGRAPHICSENGINE_QUEUESYSTEM_H
-#include <d3d12.h>
 
 #include "SystemBase.h"
 #include "engine/DxUtils.h"
@@ -29,13 +28,13 @@ public:
         DX_CHECK(ctx.dx.device->CreateCommandQueue(&desc, IID_PPV_ARGS(&copyQueue)));
     }
 
-    ID3D12CommandQueue& GetGraphicsQueue() const {
+    [[nodiscard]] ID3D12CommandQueue& GetGraphicsQueue() const {
         return *graphicsQueue.Get();
     };
-    ID3D12CommandQueue& GetComputeQueue() const {
+    [[nodiscard]] ID3D12CommandQueue& GetComputeQueue() const {
         return *computeQueue.Get();
     };
-    ID3D12CommandQueue& GetCopyQueue() const {
+    [[nodiscard]] ID3D12CommandQueue& GetCopyQueue() const {
         return *copyQueue.Get();
     };
 

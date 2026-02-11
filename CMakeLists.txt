@@ -16,6 +16,9 @@ add_executable(DxGraphicsEngine
         engine/DxUtils.h
         engine/systems/QueueSystem.h
         engine/systems/window/WindowSystem.h
+        engine/Engine.h
+        engine/Engine.cpp
+        engine/systems/render/RenderSystem.h
 )
 
 target_include_directories(DxGraphicsEngine
@@ -33,6 +36,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glfw)
 
+FetchContent_Declare(
+        directx_headers
+        GIT_REPOSITORY https://github.com/microsoft/DirectX-Headers.git
+        GIT_TAG        main # Or a specific release tag
+)
+
+FetchContent_MakeAvailable(directx_headers)
+
 target_link_libraries(DxGraphicsEngine
         PRIVATE
         glfw
@@ -40,6 +51,11 @@ target_link_libraries(DxGraphicsEngine
         dxgi
         dxguid
         d3dcompiler
+        Microsoft::DirectX-Headers
+)
+
+target_include_directories(DxGraphicsEngine BEFORE PRIVATE
+        ${directx_headers_SOURCE_DIR}/include/directx
 )
 
 target_compile_definitions(DxGraphicsEngine

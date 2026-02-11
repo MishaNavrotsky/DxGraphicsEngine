@@ -14,13 +14,16 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
+#include "engine/systems/render/RenderSystem.h"
+#include "engine/systems/window/SwapChainSystem.h"
+
 class WindowSystem: public SystemBase {
     GLFWwindow* window = nullptr;
     HWND windowHandle = nullptr;
 public:
     explicit WindowSystem() = default;
 
-    void Initialize(const EngineContext& ctx) {
+    void Initialize(EngineContext& ctx) {
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize glfw");
 
@@ -31,9 +34,10 @@ public:
         );
 
         windowHandle = glfwGetWin32Window(window);
+        ctx.windowConfig.windowHandle = windowHandle;
     }
 
-    void StartPolling() const {
+    void StartPolling(EngineContext& ctx) const {
         while (!glfwWindowShouldClose(window))
         {
             glfwPollEvents();
