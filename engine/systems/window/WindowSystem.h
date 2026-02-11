@@ -8,7 +8,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 
 #include "engine/DxUtils.h"
-#include "engine/EngineContext.h"
+#include "engine/core/EngineContext.h"
 #include "engine/systems/SystemBase.h"
 #include "engine/Globals.h"
 #include <GLFW/glfw3.h>

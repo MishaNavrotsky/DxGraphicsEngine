@@ -4,19 +4,18 @@
 
 #ifndef DXGRAPHICSENGINE_ENGINE_H
 #define DXGRAPHICSENGINE_ENGINE_H
-#include <dxgi1_6.h>
 #include <print>
 #include <thread>
 #include <chrono>
 #include <atomic>
 
-#include "DxUtils.h"
-#include "EngineContext.h"
+#include "engine/DxUtils.h"
+#include "engine/core/EngineContext.h"
 
-#include "systems/QueueSystem.h"
-#include "systems/window/SwapChainSystem.h"
-#include "systems/window/WindowSystem.h"
-#include "systems/render/RenderSystem.h"
+#include "engine/systems/QueueSystem.h"
+#include "engine/systems/window/SwapChainSystem.h"
+#include "engine/systems/window/WindowSystem.h"
+#include "engine/systems/render/RenderSystem.h"
 
 class Engine {
 public:
@@ -42,6 +41,7 @@ private:
     void InitializeContext();
     void InitializeAdapter();
     void InitializeSystems();
+    void InitializeAllocator();
 
     std::stop_source stopSource;
 #ifdef _DEBUG

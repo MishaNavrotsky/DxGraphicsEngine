@@ -4,10 +4,12 @@
 
 #ifndef DXGRAPHICSENGINE_RENDERSYSTEM_H
 #define DXGRAPHICSENGINE_RENDERSYSTEM_H
-#include "engine/EngineContext.h"
+#include "engine/core/EngineContext.h"
 #include "engine/systems/SystemBase.h"
 
 class RenderSystem: public SystemBase {
+    SwapChainSystem* swapChainSystem;
+
 public:
     explicit RenderSystem() = default;
 

@@ -5,11 +5,11 @@
 #ifndef DXGRAPHICSENGINE_ENGINECONTEXT_H
 #define DXGRAPHICSENGINE_ENGINECONTEXT_H
 #include <cstdint>
-#include <d3d12.h>
+#include "engine/DxUtils.h"
 #include <dxgiformat.h>
-#include "Types.h"
-#include "libs/Registry.h"
-#include "systems/SystemBase.h"
+#include "engine/Types.h"
+#include "engine/libs/Registry.h"
+#include "engine/systems/SystemBase.h"
 
 struct WindowConfig {
     std::uint32_t width = 1280, height = 720;
@@ -17,15 +17,21 @@ struct WindowConfig {
     HWND windowHandle = nullptr;
 };
 
-struct DXContext {
+struct DxContext {
     dx::ComPtr<ID3D12Device> device;
     dx::ComPtr<IDXGIFactory6> factory;
+    dx::ComPtr<IDXGIAdapter4> adapter;
+    dx::ComPtr<D3D12MA::Allocator> allocator;
+};
+
+struct SwapChainConfig {
     std::uint32_t bufferCount = 3;
 };
 
 struct EngineContext {
     WindowConfig windowConfig;
-    DXContext dx;
+    SwapChainConfig swapChainConfig;
+    DxContext dx;
     Registry<SystemBase> systems;
     std::stop_token stopToken;
 };

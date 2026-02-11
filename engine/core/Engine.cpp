@@ -2,7 +2,7 @@
 // Created by Misha on 2/11/2026.
 //
 
-#include "Engine.h"
+#include "engine/core/Engine.h"
 
 std::unique_ptr<Engine> Engine::instance = nullptr;
 
@@ -16,6 +16,7 @@ void Engine::Initialize() {
 #endif
     instance = std::unique_ptr<Engine>(new Engine());
     instance->InitializeAdapter();
+    instance->InitializeAllocator();
 #ifdef _DEBUG
     instance->InitializeAdapterDebug();
 #endif
@@ -23,12 +24,12 @@ void Engine::Initialize() {
     instance->InitializeSystems();
 }
 
-Engine& Engine::Get() {
+Engine &Engine::Get() {
     return *instance;
 }
 
 void Engine::Run() {
-    const WindowSystem& windowSystem = context.systems.Get<WindowSystem>();
+    const WindowSystem &windowSystem = context.systems.Get<WindowSystem>();
     windowSystem.StartPolling(context);
 }
 
@@ -41,25 +42,24 @@ void Engine::Shutdown() {
 }
 
 void Engine::InitializeAdapter() {
-    {
-        DX_CHECK(CreateDXGIFactory2(0, IID_PPV_ARGS(&context.dx.factory)));
+    DX_CHECK(CreateDXGIFactory2(0, IID_PPV_ARGS(&context.dx.factory)));
 
-        dx::ComPtr<IDXGIAdapter1> adapter;
-        for (UINT i = 0; context.dx.factory->EnumAdapters1(i, &adapter) != DXGI_ERROR_NOT_FOUND; ++i) {
-            DXGI_ADAPTER_DESC1 desc;
-            DX_CHECK(adapter->GetDesc1(&desc));
+    dx::ComPtr<IDXGIAdapter1> adapter;
+    for (UINT i = 0; context.dx.factory->EnumAdapters1(i, &adapter) != DXGI_ERROR_NOT_FOUND; ++i) {
+        DXGI_ADAPTER_DESC1 desc;
+        DX_CHECK(adapter->GetDesc1(&desc));
 
-            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) continue;
+        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) continue;
 
-            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(),
-                D3D_FEATURE_LEVEL_12_2,
-                __uuidof(ID3D12Device),
-                nullptr))) {
-                break;
-            }
+        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(),
+            D3D_FEATURE_LEVEL_12_2,
+            __uuidof(ID3D12Device),
+            nullptr))) {
+            break;
         }
-        DX_CHECK(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&context.dx.device)));
     }
+    DX_CHECK(adapter.As(&context.dx.adapter));
+    DX_CHECK(D3D12CreateDevice(context.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&context.dx.device)));
 }
 
 void Engine::InitializeSystems() {
@@ -72,6 +72,14 @@ void Engine::InitializeSystems() {
     renderSystem.Initialize(context);
     windowSystem.Initialize(context);
     swapChainSystem.Initialize(context);
+}
+
+void Engine::InitializeAllocator() {
+    D3D12MA::ALLOCATOR_DESC allocatorDesc = {};
+    allocatorDesc.pDevice = context.dx.device.Get();
+    allocatorDesc.pAdapter = context.dx.adapter.Get();
+
+    DX_CHECK(D3D12MA::CreateAllocator(&allocatorDesc, &context.dx.allocator));
 }
 
 #ifdef _DEBUG
@@ -88,7 +96,7 @@ void Engine::InitializeDebug() {
 void Engine::InitializeAdapterDebug() {
     DX12DebugSetup(context.dx.device.Get());
     std::atomic<bool> debugThreadStarted = false;
-    adapterDebugThread = std::thread([&](const std::stop_token& st) {
+    adapterDebugThread = std::thread([&](const std::stop_token &st) {
         std::print("[DX12] Debug polling thread started\n");
         debugThreadStarted.store(true, std::memory_order_release);
 

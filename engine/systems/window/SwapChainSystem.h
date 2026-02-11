@@ -8,7 +8,7 @@
 #include <algorithm>
 
 #include "engine/systems/SystemBase.h"
-#include "engine/EngineContext.h"
+#include "engine/core/EngineContext.h"
 #include "engine/DxUtils.h"
 #include "engine/systems/QueueSystem.h"
 
@@ -24,7 +24,7 @@ class SwapChainSystem : public SystemBase {
             .Format = swapChainFormat,
             .SampleDesc = {.Count = 1, .Quality = 0},
             .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-            .BufferCount = ctx.dx.bufferCount,
+            .BufferCount = ctx.swapChainConfig.bufferCount,
             .Scaling = DXGI_SCALING_STRETCH,
             .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
             .AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED,

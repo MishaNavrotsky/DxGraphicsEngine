@@ -12,12 +12,12 @@ add_executable(DxGraphicsEngine
         engine/Globals.h
         engine/libs/Registry.h
         engine/systems/SystemBase.h
-        engine/EngineContext.h
+        engine/core/EngineContext.h
         engine/DxUtils.h
         engine/systems/QueueSystem.h
         engine/systems/window/WindowSystem.h
-        engine/Engine.h
-        engine/Engine.cpp
+        engine/core/Engine.h
+        engine/core/Engine.cpp
         engine/systems/render/RenderSystem.h
 )
 
@@ -33,7 +33,6 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.4
 )
-
 FetchContent_MakeAvailable(glfw)
 
 FetchContent_Declare(
@@ -41,8 +40,14 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/microsoft/DirectX-Headers.git
         GIT_TAG        main # Or a specific release tag
 )
-
 FetchContent_MakeAvailable(directx_headers)
+
+FetchContent_Declare(
+        d3d12ma
+        GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator.git
+        GIT_TAG        master
+)
+FetchContent_MakeAvailable(d3d12ma)
 
 target_link_libraries(DxGraphicsEngine
         PRIVATE
@@ -52,6 +57,7 @@ target_link_libraries(DxGraphicsEngine
         dxguid
         d3dcompiler
         Microsoft::DirectX-Headers
+        D3D12MemoryAllocator
 )
 
 target_include_directories(DxGraphicsEngine BEFORE PRIVATE
