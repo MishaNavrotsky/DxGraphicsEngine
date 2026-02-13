@@ -2,8 +2,7 @@
 
 int main() {
     Engine::Initialize();
-    Engine& engine = Engine::Get();
-    engine.Run();
-    engine.Shutdown();
+    Engine::Run();
+    Engine::Shutdown();
     return 0;
 }
