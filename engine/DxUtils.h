@@ -2,8 +2,7 @@
 // Created by Misha on 2/3/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_DXUTILS_H
-#define DXGRAPHICSENGINE_DXUTILS_H
+#pragma once
 
 #include <sstream>
 #include <iostream>
@@ -96,5 +95,3 @@ std::cerr << oss.str() << std::endl; \
 throw std::runtime_error(oss.str()); \
 } \
 } while(0)
-
-#endif //DXGRAPHICSENGINE_DXUTILS_H

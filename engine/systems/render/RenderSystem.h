@@ -2,8 +2,8 @@
 // Created by Misha on 2/11/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_RENDERSYSTEM_H
-#define DXGRAPHICSENGINE_RENDERSYSTEM_H
+#pragma once
+
 #include "engine/core/EngineContext.h"
 #include "engine/systems/SystemBase.h"
 
@@ -24,5 +24,3 @@ public:
 
     }
 };
-
-#endif //DXGRAPHICSENGINE_RENDERSYSTEM_H

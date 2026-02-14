@@ -2,8 +2,7 @@
 // Created by Misha on 2/3/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_QUEUESYSTEM_H
-#define DXGRAPHICSENGINE_QUEUESYSTEM_H
+#pragma once
 
 #include "SystemBase.h"
 #include "engine/DxUtils.h"
@@ -43,5 +42,3 @@ private:
     dx::ComPtr<ID3D12CommandQueue> computeQueue;
     dx::ComPtr<ID3D12CommandQueue> copyQueue;
 };
-
-#endif //DXGRAPHICSENGINE_QUEUESYSTEM_H

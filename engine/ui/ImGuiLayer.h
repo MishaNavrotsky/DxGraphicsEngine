@@ -2,8 +2,7 @@
 // Created by Misha on 2/13/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_IMGUILAYER_H
-#define DXGRAPHICSENGINE_IMGUILAYER_H
+#pragma once
 
 #include <d3d12.h>
 #include <windows.h>
@@ -20,5 +19,3 @@ public:
 private:
     bool enabled = false;
 };
-
-#endif //DXGRAPHICSENGINE_IMGUILAYER_H

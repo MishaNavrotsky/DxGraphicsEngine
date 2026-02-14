@@ -2,8 +2,7 @@
 // Created by Misha on 2/3/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_SYSTEMBASE_H
-#define DXGRAPHICSENGINE_SYSTEMBASE_H
+#pragma once
 
 class SystemBase {
 public:
@@ -15,5 +14,3 @@ public:
     SystemBase(SystemBase&&) = delete;
     SystemBase& operator=(SystemBase&&) = delete;
 };
-
-#endif //DXGRAPHICSENGINE_SYSTEMBASE_H

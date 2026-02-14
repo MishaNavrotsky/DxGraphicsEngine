@@ -2,8 +2,7 @@
 // Created by Misha on 2/3/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_SWAPCHAINSYSTEM_H
-#define DXGRAPHICSENGINE_SWAPCHAINSYSTEM_H
+#pragma once
 
 #include <algorithm>
 
@@ -100,4 +99,3 @@ private:
     }
 };
 
-#endif //DXGRAPHICSENGINE_SWAPCHAINSYSTEM_H

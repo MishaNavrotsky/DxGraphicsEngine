@@ -2,8 +2,8 @@
 // Created by Misha on 2/3/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_ENGINECONTEXT_H
-#define DXGRAPHICSENGINE_ENGINECONTEXT_H
+#pragma once
+
 #include <cstdint>
 #include "engine/DxUtils.h"
 #include <dxgiformat.h>
@@ -35,5 +35,3 @@ struct EngineContext {
     Registry<SystemBase> systems;
     std::stop_token stopToken;
 };
-
-#endif //DXGRAPHICSENGINE_ENGINECONTEXT_H

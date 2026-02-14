@@ -2,8 +2,7 @@
 // Created by Misha on 2/11/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_ENGINE_H
-#define DXGRAPHICSENGINE_ENGINE_H
+#pragma once
 
 #include <memory>
 #include <stop_token>
@@ -32,4 +31,3 @@ private:
     static std::unique_ptr<Engine> instance;
 };
 
-#endif //DXGRAPHICSENGINE_ENGINE_H

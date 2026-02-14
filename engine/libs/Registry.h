@@ -2,8 +2,7 @@
 // Created by Misha on 2/3/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_REGISTRY_H
-#define DXGRAPHICSENGINE_REGISTRY_H
+#pragma once
 
 #include <memory>
 #include <typeindex>
@@ -52,4 +51,3 @@ private:
 };
 
 
-#endif //DXGRAPHICSENGINE_REGISTRY_H

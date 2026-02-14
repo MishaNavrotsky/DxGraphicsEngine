@@ -2,8 +2,7 @@
 // Created by Misha on 2/3/2026.
 //
 
-#ifndef DXGRAPHICSENGINE_WINDOWSYSTEM_H
-#define DXGRAPHICSENGINE_WINDOWSYSTEM_H
+#pragma once
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 
@@ -50,5 +49,3 @@ public:
         return windowHandle;
     }
 };
-
-#endif //DXGRAPHICSENGINE_WINDOWSYSTEM_H
