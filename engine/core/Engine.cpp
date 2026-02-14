@@ -106,6 +106,7 @@ void Engine::Initialize() {
     instance = std::unique_ptr<Engine>(new Engine());
     instance->pimpl->InitializeAdapter();
     instance->pimpl->InitializeAllocator();
+    instance->pimpl->InitializeContext();
 #ifdef _DEBUG
     instance->pimpl->InitializeAdapterDebug();
 #endif

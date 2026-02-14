@@ -1,0 +1,6 @@
+add_subdirectory(ImGuiDx12)
+add_subdirectory(enkiTS)
+add_subdirectory(d3d12ma)
+add_subdirectory(glfw)
+add_subdirectory(entt)
+add_subdirectory(dxheaders)

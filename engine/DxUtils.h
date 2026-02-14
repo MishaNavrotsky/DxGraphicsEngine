@@ -8,9 +8,9 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <D3D12MemAlloc.h>
-#include <directx/d3d12.h>
-#include <directx/d3dx12.h>
+#include <third_party/d3d12ma/D3D12MemAlloc.h>
+#include <third_party/directx/d3d12.h>
+#include <third_party/directx/d3dx12.h>
 
 #include <dxgi1_6.h>
 #include <dxgidebug.h>

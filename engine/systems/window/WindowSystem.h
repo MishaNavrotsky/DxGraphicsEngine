@@ -10,8 +10,8 @@
 #include "engine/core/EngineContext.h"
 #include "engine/systems/SystemBase.h"
 #include "engine/Globals.h"
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
+#include <third_party/glfw/glfw3.h>
+#include <third_party/glfw/glfw3native.h>
 
 #include "engine/systems/render/RenderSystem.h"
 #include "engine/systems/window/SwapChainSystem.h"
