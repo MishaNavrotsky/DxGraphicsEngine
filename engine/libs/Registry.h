@@ -12,6 +12,7 @@
 
 template <typename Base>
 class Registry {
+    using Map = std::unordered_map<std::type_index, std::unique_ptr<Base>>;
 public:
     Registry() = default;
     ~Registry() = default;
@@ -25,6 +26,14 @@ public:
         if (it == items.end())
             throw std::runtime_error("System not registered");
         return *static_cast<T*>(it->second.get());
+    }
+    template <typename T>
+    T* GetMaybe() {
+        const auto it = items.find(typeid(T));
+        if (it == items.end()) {
+            return nullptr;
+        }
+        return static_cast<T*>(it->second.get());
     }
     template<typename T, typename... Args>
     T& Register(Args &&... args) {
@@ -46,8 +55,11 @@ public:
         items[type] = std::move(args);
         return ref;
     }
+    Map& GetItems() {
+        return items;
+    }
 private:
-    std::unordered_map<std::type_index, std::unique_ptr<Base>> items;
+    Map items;
 };
 
 

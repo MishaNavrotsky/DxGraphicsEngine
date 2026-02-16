@@ -7,14 +7,12 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 
 #include "engine/DxUtils.h"
-#include "engine/core/EngineContext.h"
+#include "engine/core/EngineContextInternal.h"
 #include "engine/systems/SystemBase.h"
 #include "engine/Globals.h"
 #include <third_party/glfw/glfw3.h>
 #include <third_party/glfw/glfw3native.h>
 
-#include "engine/systems/render/RenderSystem.h"
-#include "engine/systems/window/SwapChainSystem.h"
 
 class WindowSystem: public SystemBase {
     GLFWwindow* window = nullptr;
@@ -22,21 +20,20 @@ class WindowSystem: public SystemBase {
 public:
     explicit WindowSystem() = default;
 
-    void Initialize(EngineContext& ctx) {
+    void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize glfw");
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // important for DX12
 
         window = glfwCreateWindow(
-            static_cast<int32_t>(ctx.windowConfig.width), static_cast<int32_t>(ctx.windowConfig.height), Globals::PROJ_NAME.data(), nullptr, nullptr
+            static_cast<int32_t>(configs.window.width), static_cast<int32_t>(configs.window.height), Globals::PROJ_NAME.data(), nullptr, nullptr
         );
 
         windowHandle = glfwGetWin32Window(window);
-        ctx.windowConfig.windowHandle = windowHandle;
     }
 
-    void StartPolling(EngineContext& ctx) const {
+    void StartPolling(EngineContextInternal& ctx) const {
         while (!glfwWindowShouldClose(window))
         {
             glfwPollEvents();

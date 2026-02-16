@@ -10,14 +10,18 @@ add_library(Engine STATIC
         Globals.h
         libs/Registry.h
         systems/SystemBase.h
-        core/EngineContext.h
+        core/EngineContextInternal.h
         DxUtils.h
         systems/QueueSystem.h
         systems/window/WindowSystem.h
         core/Engine.h
         core/Engine.cpp
         systems/render/RenderSystem.h
-        ui/ImGuiLayer.h
+        systems/ui/UISystem.h
+        libs/Allocators.h
+        libs/DescriptorHeaps.h
+        core/EngineConfigs.h
+        core/EngineContext.h
 )
 
 target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)

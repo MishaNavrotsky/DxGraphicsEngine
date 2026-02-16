@@ -4,26 +4,31 @@
 
 #include "engine/core/Engine.h"
 
+#include <ranges>
+
+#include "EngineContext.h"
 #include "engine/DxUtils.h"
-#include "engine/core/EngineContext.h"
+#include "engine/core/EngineContextInternal.h"
 
 #include "engine/systems/QueueSystem.h"
 #include "engine/systems/window/SwapChainSystem.h"
 #include "engine/systems/window/WindowSystem.h"
 #include "engine/systems/render/RenderSystem.h"
+#include "engine/systems/ui/UISystem.h"
 
 struct Engine::Impl {
     EngineContext context;
+    EngineContextInternal contextInternal;
     std::stop_source stopSource;
 
     void InitializeContext() {
-        context.stopToken = stopSource.get_token();
+        contextInternal.stopToken = stopSource.get_token();
     }
     void InitializeAdapter() {
-        DX_CHECK(CreateDXGIFactory2(0, IID_PPV_ARGS(&context.dx.factory)));
+        DX_CHECK(CreateDXGIFactory2(0, IID_PPV_ARGS(&contextInternal.dx.factory)));
 
         dx::ComPtr<IDXGIAdapter1> adapter;
-        for (UINT i = 0; context.dx.factory->EnumAdapters1(i, &adapter) != DXGI_ERROR_NOT_FOUND; ++i) {
+        for (UINT i = 0; contextInternal.dx.factory->EnumAdapters1(i, &adapter) != DXGI_ERROR_NOT_FOUND; ++i) {
             DXGI_ADAPTER_DESC1 desc;
             DX_CHECK(adapter->GetDesc1(&desc));
 
@@ -36,26 +41,37 @@ struct Engine::Impl {
                 break;
                 }
         }
-        DX_CHECK(adapter.As(&context.dx.adapter));
-        DX_CHECK(D3D12CreateDevice(context.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&context.dx.device)));
+        DX_CHECK(adapter.As(&contextInternal.dx.adapter));
+        DX_CHECK(D3D12CreateDevice(contextInternal.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&contextInternal.dx.device)));
     }
     void InitializeSystems() {
         auto &queueSystem = context.systems.Register<QueueSystem>();
-        auto &renderSystem = context.systems.Register<RenderSystem>();
-        auto &windowSystem = context.systems.Register<WindowSystem>();
-        auto &swapChainSystem = context.systems.Register<SwapChainSystem>();
+        queueSystem.Startup(contextInternal, context.configs);
 
-        queueSystem.Initialize(context);
-        renderSystem.Initialize(context);
-        windowSystem.Initialize(context);
-        swapChainSystem.Initialize(context);
+        auto &windowSystem = context.systems.Register<WindowSystem>();
+        windowSystem.Startup(contextInternal, context.configs);
+
+        auto &swapChainSystem = context.systems.Register<SwapChainSystem>(queueSystem, windowSystem.GetWindowHandle());
+        swapChainSystem.Startup(contextInternal, context.configs);
+
+        auto &renderSystem = context.systems.Register<RenderSystem>(swapChainSystem);
+        renderSystem.Startup(contextInternal, context.configs);
+
+        if (context.configs.uiConfig.enabled) {
+            auto &uiSystem = context.systems.Register<UISystem>(windowSystem, queueSystem);
+            uiSystem.Startup(contextInternal, context.configs);
+        }
     }
     void InitializeAllocator() {
         D3D12MA::ALLOCATOR_DESC allocatorDesc = {};
-        allocatorDesc.pDevice = context.dx.device.Get();
-        allocatorDesc.pAdapter = context.dx.adapter.Get();
+        allocatorDesc.pDevice = contextInternal.dx.device.Get();
+        allocatorDesc.pAdapter = contextInternal.dx.adapter.Get();
 
-        DX_CHECK(D3D12MA::CreateAllocator(&allocatorDesc, &context.dx.allocator));
+        DX_CHECK(D3D12MA::CreateAllocator(&allocatorDesc, &contextInternal.dx.allocator));
+    }
+
+    void InitializeDescriptorHeap() {
+        contextInternal.dx.descriptorHeap.Init(contextInternal.dx.device.Get(), context.configs.bindlessHeapConfig);
     }
 #ifdef _DEBUG
     static void InitializeDebug() {
@@ -72,7 +88,7 @@ struct Engine::Impl {
     std::stop_source adapterDebugThreadStopSource;
     std::stop_token adapterDebugThreadStopToken = adapterDebugThreadStopSource.get_token();
     void InitializeAdapterDebug() {
-        DX12DebugSetup(context.dx.device.Get());
+        DX12DebugSetup(contextInternal.dx.device.Get());
         std::atomic<bool> debugThreadStarted = false;
         adapterDebugThread = std::thread([&](const std::stop_token &st) {
             std::print("[DX12] Debug polling thread started\n");
@@ -106,6 +122,7 @@ void Engine::Initialize() {
     instance = std::unique_ptr<Engine>(new Engine());
     instance->pimpl->InitializeAdapter();
     instance->pimpl->InitializeAllocator();
+    instance->pimpl->InitializeDescriptorHeap();
     instance->pimpl->InitializeContext();
 #ifdef _DEBUG
     instance->pimpl->InitializeAdapterDebug();
@@ -120,7 +137,7 @@ Engine &Engine::Get() {
 
 void Engine::Run() {
     const WindowSystem &windowSystem = instance->pimpl->context.systems.Get<WindowSystem>();
-    windowSystem.StartPolling(instance->pimpl->context);
+    windowSystem.StartPolling(instance->pimpl->contextInternal);
 }
 
 void Engine::Shutdown() {
@@ -129,4 +146,5 @@ void Engine::Shutdown() {
     if (instance->pimpl->adapterDebugThread.joinable()) instance->pimpl->adapterDebugThread.join();
 #endif
     instance->pimpl->stopSource.request_stop();
+    for (const auto &val: instance->pimpl->context.systems.GetItems() | std::views::values) val->Shutdown();
 }

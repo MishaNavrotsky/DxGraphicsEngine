@@ -4,23 +4,23 @@
 
 #pragma once
 
-#include "engine/core/EngineContext.h"
+#include "engine/core/EngineContextInternal.h"
 #include "engine/systems/SystemBase.h"
+#include "engine/systems/window/SwapChainSystem.h"
 
-class RenderSystem: public SystemBase {
-    SwapChainSystem* swapChainSystem;
+class RenderSystem : public SystemBase {
+    SwapChainSystem& swapChainSystem;
 
 public:
-    explicit RenderSystem() = default;
+    explicit RenderSystem(SwapChainSystem& swapChainSystem) : swapChainSystem(swapChainSystem) {};
 
-    void Initialize(EngineContext& ctx) {
-
+    void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
     }
 
-    void BeginFrame(EngineContext& ctx) {
+    void BeginFrame(EngineContextInternal& ctx) {
 
     }
-    void EndFrame(EngineContext& ctx) {
+    void EndFrame(EngineContextInternal& ctx) {
 
     }
 };

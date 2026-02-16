@@ -6,12 +6,12 @@
 
 #include "SystemBase.h"
 #include "engine/DxUtils.h"
-#include "engine/core/EngineContext.h"
+#include "engine/core/EngineContextInternal.h"
 
 class QueueSystem : public SystemBase {
 public:
     explicit QueueSystem() = default;
-    void Initialize(EngineContext& ctx) {
+    void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
         D3D12_COMMAND_QUEUE_DESC desc{};
         desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
