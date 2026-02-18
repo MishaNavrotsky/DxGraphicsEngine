@@ -6,6 +6,8 @@
 #include <cstdint>
 
 
+constexpr const uint32_t FramesInFlightCount = 3;
+
 struct WindowConfig {
     std::uint32_t width = 1280, height = 720;
     bool vsync = false;
@@ -26,7 +28,6 @@ struct BindlessHeapConfig {
 };
 
 struct EngineConfig {
-    uint32_t framesInFlight = 3;
 };
 
 struct EngineConfigs {

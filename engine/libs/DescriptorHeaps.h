@@ -20,6 +20,7 @@ struct DescriptorHandle {
 };
 
 struct CbvSrvUavDescriptorHeap {
+private:
     ID3D12Device* device = nullptr;
     const uint32_t MaxGpuDescriptors = 1000000;
     uint32_t numDescriptors = 0;
@@ -29,14 +30,15 @@ struct CbvSrvUavDescriptorHeap {
 
     RangeSlotAllocator staticAllocator;
     RangeSlotAllocator reusableAllocator;
-    std::vector<FrameBumpAllocator> dynamicAllocators;
+    std::array<FrameBumpAllocator, FramesInFlightCount> dynamicAllocators;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuStart{};
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuStart{};
 
+public:
     void Initialize(ID3D12Device* dv, const BindlessHeapConfig& config, const EngineConfig& engineConfig) {
         device = dv;
-        numDescriptors = config.staticCapacity + config.reusableCapacity + (config.dynamicCapacityPerFrame * engineConfig.framesInFlight);
+        numDescriptors = config.staticCapacity + config.reusableCapacity + (config.dynamicCapacityPerFrame * FramesInFlightCount);
         if (numDescriptors > MaxGpuDescriptors) {
             throw std::runtime_error("[CbvSrvUavDescriptorHeap] Too many descriptors per GPU descriptor heap");
         }
@@ -61,8 +63,7 @@ struct CbvSrvUavDescriptorHeap {
         reusableAllocator.Initialize(currentOffset, config.reusableCapacity);
         currentOffset += config.reusableCapacity;
 
-        dynamicAllocators.resize(engineConfig.framesInFlight);
-        for (uint32_t i = 0; i < engineConfig.framesInFlight; ++i) {
+        for (uint32_t i = 0; i < FramesInFlightCount; ++i) {
             dynamicAllocators[i].Initialize(currentOffset, config.dynamicCapacityPerFrame);
             currentOffset += config.dynamicCapacityPerFrame;
         }
@@ -108,7 +109,18 @@ struct CbvSrvUavDescriptorHeap {
         return handle;
     }
 
+    DescriptorHandle AllocateStatic(const uint32_t count) {
+        const uint32_t startIndex = staticAllocator.Allocate(count);
+        if (startIndex == InvalidIndex) return {};
+
+        return GetHandle(startIndex, count);;
+    }
+
     DescriptorHandle AllocateDynamic(const uint32_t frameIndex, const uint32_t count = 1) {
         return GetHandle(dynamicAllocators[frameIndex].Allocate(count), count);
+    }
+
+    [[nodiscard]] uint32_t GetDescriptorHandleIncrementSize() const {
+        return descriptorSize;
     }
 };

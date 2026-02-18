@@ -23,7 +23,9 @@ class UISystem : public SystemBase {
     QueueSystem& queueSystem;
     CbvSrvUavDescriptorHeap* descriptorHeap;
     ImGuiContext* imguiContext = nullptr;
-
+    DescriptorHandle descriptorHandle{};
+    uint32_t descriptorHeapOffset = 0;
+    const uint32_t DescriptorHeapSize = 256;
 public:
     explicit UISystem(WindowSystem& window, QueueSystem& queueSystem) : windowSystem(window), queueSystem(queueSystem) {
         IMGUI_CHECKVERSION();
@@ -36,8 +38,7 @@ public:
         auto* device = ctx.dx.device.Get();
         assert(device != nullptr);
 
-        auto cpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->Get()->GetCPUDescriptorHandleForHeapStart());
-        auto gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->Get()->GetGPUDescriptorHandleForHeapStart());
+        descriptorHandle = ctx.dx.descriptorHeap.AllocateStatic(DescriptorHeapSize);
 
         ImGui_ImplWin32_Init(windowSystem.GetWindowHandle());
 
@@ -47,19 +48,22 @@ public:
         init_info.NumFramesInFlight = static_cast<int32_t>(configs.swapChain.bufferCount);
         init_info.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
         init_info.DSVFormat = DXGI_FORMAT_UNKNOWN;
-        init_info.UserData = &ctx.dx.descriptorHeap;
+        init_info.UserData = this;
 
         init_info.SrvDescriptorHeap = ctx.dx.descriptorHeap.Get();
         init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) {
-            const auto& descriptorHeap = *static_cast<CbvSrvUavDescriptorHeap*>(info->UserData);
-            std::printf("test");
+            auto& uiSystem = *static_cast<UISystem*>(info->UserData);
 
-            return;
+            *out_cpu_handle = {uiSystem.descriptorHandle.startCpu.ptr + uiSystem.descriptorHeapOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
+            *out_gpu_handle = {uiSystem.descriptorHandle.startGpu.ptr + uiSystem.descriptorHeapOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
+
+            uiSystem.descriptorHeapOffset++;
+
+            assert(uiSystem.descriptorHeapOffset < uiSystem.DescriptorHeapSize);
         };
         init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) {
-            const auto& descriptorHeap = *static_cast<CbvSrvUavDescriptorHeap*>(info->UserData);
-
-            return;
+            auto& context = *static_cast<EngineContextInternal*>(info->UserData);
+            //TODO: for now there is no way to clear allocated descriptor heap slots and I'm not sure if it is needed if SrvDescriptorAllocFn runs per frame for each required resource
         };
         ImGui_ImplDX12_Init(&init_info);
     }
@@ -67,6 +71,7 @@ public:
 
 
     void BeginFrame(EngineContextInternal& ctx) {
+        descriptorHeapOffset = 0;
         ImGui_ImplDX12_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
