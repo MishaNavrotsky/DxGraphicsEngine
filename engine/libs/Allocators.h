@@ -1,104 +1,121 @@
 //
 // Created by Misha on 2/15/2026.
 //
-
 #pragma once
 
-#include <cassert>
 #include <cstdint>
+#include <mutex>
 #include <vector>
+#include <algorithm>
+#include <iterator>
 
-struct SlotAllocator {
-    std::vector<size_t> freeIndices;
-    size_t capacity;
+static constexpr uint32_t InvalidIndex = UINT32_MAX;
 
-    void Init(const size_t maxItems) {
-        capacity = maxItems;
-        freeIndices.resize(capacity);
+struct Range {
+    uint32_t offset;
+    uint32_t size;
 
-        for (size_t i = 0; i < capacity; ++i) {
-            freeIndices[i] = capacity - 1 - i;
-        }
-    }
-
-    size_t Allocate() {
-        if (freeIndices.empty()) {
-            return static_cast<size_t>(-1);
-        }
-        size_t index = freeIndices.back();
-        freeIndices.pop_back();
-        return index;
-    }
-
-    void Free(size_t index) {
-        freeIndices.push_back(index);
-    }
-
-    void Reset() {
-        Init(capacity);
-    }
-};
-struct LinearAllocator {
-    size_t capacity = 0;
-    size_t currentIndex = 0;
-
-    void Init(const size_t maxItems) {
-        capacity = maxItems;
-        currentIndex = 0;
-    }
-
-    size_t Allocate(const size_t count = 1) {
-        if (currentIndex + count > capacity) {
-            return static_cast<size_t>(-1);
-        }
-        const size_t allocatedIndex = currentIndex;
-        currentIndex += count;
-        return allocatedIndex;
-    }
-
-    void Reset() {
-        currentIndex = 0;
+    [[nodiscard]] bool IsAdjacent(const Range& other) const {
+        return offset + size == other.offset || other.offset + other.size == offset;
     }
 };
 
-struct RingAllocator {
-    size_t capacity = 0;
-    size_t head = 0;
-    size_t tail = 0;
-    bool isFull = false;
+struct RangeSlotAllocator {
+    uint32_t capacity = 0;
+    uint32_t startOffset = 0;
 
-    void Init(const size_t maxItems) {
+    std::vector<Range> freeRanges{};
+    std::mutex allocationMutex{};
+
+    void Initialize(const uint32_t offset, const uint32_t maxItems) {
+        std::lock_guard<std::mutex> lock(allocationMutex);
+        startOffset = offset;
         capacity = maxItems;
-        head = 0;
-        tail = 0;
-        isFull = false;
+        freeRanges.clear();
+        freeRanges.push_back({startOffset, capacity});
     }
 
-    size_t Allocate(const size_t count = 1) {
-        if (count == 0 || capacity == 0) return static_cast<size_t>(-1);
+    uint32_t Allocate(const uint32_t numSlots) {
+        std::lock_guard<std::mutex> lock(allocationMutex);
 
-        size_t availableSpace = 0;
-        if (!isFull) {
-            if (head >= tail) {
-                availableSpace = capacity - head + tail;
-            } else {
-                availableSpace = tail - head;
+        for (auto it = freeRanges.begin(); it != freeRanges.end(); ++it) {
+            if (it->size >= numSlots) {
+                const uint32_t allocatedOffset = it->offset;
+
+                if (it->size == numSlots) {
+                    freeRanges.erase(it);
+                } else {
+                    it->offset += numSlots;
+                    it->size -= numSlots;
+                }
+                return allocatedOffset;
+            }
+        }
+        return InvalidIndex;
+    }
+
+    void Free(const uint32_t offset, const uint32_t numSlots) {
+        std::lock_guard<std::mutex> lock(allocationMutex);
+
+        const Range newRange = { offset, numSlots };
+
+        const auto it = std::ranges::lower_bound(freeRanges, newRange,
+                                                 [](const Range& a, const Range& b) { return a.offset < b.offset; });
+
+        const size_t idx = std::distance(freeRanges.begin(), it);
+        freeRanges.insert(it, newRange);
+
+        if (idx + 1 < freeRanges.size()) {
+            if (freeRanges[idx].offset + freeRanges[idx].size == freeRanges[idx + 1].offset) {
+                freeRanges[idx].size += freeRanges[idx + 1].size;
+                freeRanges.erase(freeRanges.begin() + static_cast<uint32_t>(idx) + 1);
             }
         }
 
-        if (count > availableSpace) return static_cast<size_t>(-1);
+        if (idx > 0) {
+            if (freeRanges[idx - 1].offset + freeRanges[idx - 1].size == freeRanges[idx].offset) {
+                freeRanges[idx - 1].size += freeRanges[idx].size;
+                freeRanges.erase(freeRanges.begin() + static_cast<uint32_t>(idx));
+            }
+        }
+    }
+};
 
-        const size_t allocatedIndex = head;
-        head = (head + count) % capacity;
+struct FrameBumpAllocator {
+    uint32_t startOffset = 0;
+    uint32_t capacity = 0;
+    std::atomic<uint32_t> currentOffset{0};
 
-        if (head == tail) isFull = true;
-
-        return allocatedIndex;
+    FrameBumpAllocator() = default;
+    FrameBumpAllocator(FrameBumpAllocator&& other) noexcept {
+        startOffset = other.startOffset;
+        capacity = other.capacity;
+        currentOffset.store(other.currentOffset.load());
+    };
+    FrameBumpAllocator& operator=(FrameBumpAllocator&& other) noexcept {
+        if (this != &other) {
+            startOffset = other.startOffset;
+            capacity = other.capacity;
+            currentOffset.store(other.currentOffset.load());
+        }
+        return *this;
     }
 
-    void Free(const size_t count) {
-        if (count == 0) return;
-        tail = (tail + count) % capacity;
-        isFull = false;
+    void Initialize(const uint32_t offset, const uint32_t maxItems) {
+        startOffset = offset;
+        capacity = maxItems;
+        currentOffset.store(0);
+    }
+
+    void Reset() {
+        currentOffset.store(0);
+    }
+
+    uint32_t Allocate(const uint32_t count) {
+        const uint32_t oldOffset = currentOffset.fetch_add(count);
+
+        if (oldOffset + count > capacity) return InvalidIndex;
+
+        return startOffset + oldOffset;
     }
 };

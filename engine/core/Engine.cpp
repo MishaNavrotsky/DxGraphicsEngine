@@ -71,7 +71,8 @@ struct Engine::Impl {
     }
 
     void InitializeDescriptorHeap() {
-        contextInternal.dx.descriptorHeap.Init(contextInternal.dx.device.Get(), context.configs.bindlessHeapConfig);
+        contextInternal.dx.descriptorHeap.Initialize(contextInternal.dx.device.Get(),
+                                                     context.configs.bindlessHeapConfig, context.configs.engineConfig);
     }
 #ifdef _DEBUG
     static void InitializeDebug() {
