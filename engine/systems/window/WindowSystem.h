@@ -23,14 +23,14 @@ class WindowSystem : public SystemBase {
 public:
     explicit WindowSystem() = default;
 
-    std::function<void(int key, int scancode, int action, int mods)> OnKeyCallback;
-    std::function<void(unsigned int codepoint)> OnCharCallback;
+    std::function<void(int32_t key, int32_t scancode, int32_t action, int32_t mods)> OnKeyCallback;
+    std::function<void(uint32_t codepoint)> OnCharCallback;
     std::function<void(double xpos, double ypos)> OnCursorPosCallback;
-    std::function<void(int button, int action, int mods)> OnMouseButtonCallback;
+    std::function<void(int32_t button, int32_t action, int32_t mods)> OnMouseButtonCallback;
     std::function<void(double xoffset, double yoffset)> OnScrollCallback;
-    std::function<void(int width, int height)> OnFramebufferSizeCallback;
+    std::function<void(int32_t width, int32_t height)> OnFramebufferSizeCallback;
     std::function<void()> OnWindowCloseCallback;
-    std::function<void(int focused)> OnWindowFocusCallback;
+    std::function<void(int32_t focused)> OnWindowFocusCallback;
 
     void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
         if (!glfwInit())
@@ -46,8 +46,8 @@ public:
         windowHandle = glfwGetWin32Window(window);
         glfwSetWindowUserPointer(window, this);
 
-        glfwSetKeyCallback(window, [](GLFWwindow *window, const int key, const int scancode, const int action,
-                                      const int mods) {
+        glfwSetKeyCallback(window, [](GLFWwindow *window, const int32_t key, const int32_t scancode, const int32_t action,
+                                      const int32_t mods) {
             auto *instance = static_cast<WindowSystem *>(
                 glfwGetWindowUserPointer(window)
             );
@@ -55,7 +55,7 @@ public:
             if (instance && instance->OnKeyCallback) instance->OnKeyCallback(key, scancode, action, mods);
         });
         glfwSetCharCallback(window,
-                            [](GLFWwindow *window, const unsigned int codepoint) {
+                            [](GLFWwindow *window, const uint32_t codepoint) {
                                 const auto* instance = static_cast<WindowSystem *>(glfwGetWindowUserPointer(window));
                                 if (instance && instance->OnCharCallback)
                                     instance->OnCharCallback(codepoint);
@@ -67,7 +67,7 @@ public:
                                          instance->OnCursorPosCallback(xpos, ypos);
                                  });
         glfwSetMouseButtonCallback(window,
-                                   [](GLFWwindow *window, const int button, const int action, const int mods) {
+                                   [](GLFWwindow *window, const int32_t button, const int32_t action, const int32_t mods) {
                                        const auto* instance = static_cast<WindowSystem *>(glfwGetWindowUserPointer(window));
                                        if (instance && instance->OnMouseButtonCallback)
                                            instance->OnMouseButtonCallback(button, action, mods);
@@ -79,7 +79,7 @@ public:
                                       instance->OnScrollCallback(xoffset, yoffset);
                               });
         glfwSetFramebufferSizeCallback(window,
-                                       [](GLFWwindow *window, const int width, const int height) {
+                                       [](GLFWwindow *window, const int32_t width, const int32_t height) {
                                            const auto* instance = static_cast<WindowSystem *>(
                                                glfwGetWindowUserPointer(window));
                                            if (instance && instance->OnFramebufferSizeCallback)
@@ -92,7 +92,7 @@ public:
                                            instance->OnWindowCloseCallback();
                                    });
         glfwSetWindowFocusCallback(window,
-                                   [](GLFWwindow *window, const int focused) {
+                                   [](GLFWwindow *window, const int32_t focused) {
                                        const auto* instance = static_cast<WindowSystem *>(glfwGetWindowUserPointer(window));
                                        if (instance && instance->OnWindowFocusCallback)
                                            instance->OnWindowFocusCallback(focused);
@@ -103,7 +103,7 @@ public:
         glfwPollEvents();
     }
 
-    [[nodiscard]] int ShouldWindowClose() const {
+    [[nodiscard]] int32_t ShouldWindowClose() const {
         return glfwWindowShouldClose(window);
     }
 
