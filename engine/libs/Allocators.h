@@ -25,10 +25,11 @@ struct RangeSlotAllocator {
     uint32_t startOffset = 0;
 
     std::vector<Range> freeRanges{};
+    //TODO: Bad and slow but for now will stay
     std::mutex allocationMutex{};
 
     void Initialize(const uint32_t offset, const uint32_t maxItems) {
-        std::lock_guard<std::mutex> lock(allocationMutex);
+        std::lock_guard lock(allocationMutex);
         startOffset = offset;
         capacity = maxItems;
         freeRanges.clear();
@@ -36,7 +37,7 @@ struct RangeSlotAllocator {
     }
 
     uint32_t Allocate(const uint32_t numSlots) {
-        std::lock_guard<std::mutex> lock(allocationMutex);
+        std::lock_guard lock(allocationMutex);
 
         for (auto it = freeRanges.begin(); it != freeRanges.end(); ++it) {
             if (it->size >= numSlots) {
@@ -55,7 +56,7 @@ struct RangeSlotAllocator {
     }
 
     void Free(const uint32_t offset, const uint32_t numSlots) {
-        std::lock_guard<std::mutex> lock(allocationMutex);
+        std::lock_guard lock(allocationMutex);
 
         const Range newRange = {offset, numSlots};
 
