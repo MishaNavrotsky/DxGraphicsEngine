@@ -32,7 +32,7 @@ public:
     std::function<void()> OnWindowCloseCallback;
     std::function<void(int32_t focused)> OnWindowFocusCallback;
 
-    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
+    void Initialize(EngineContextInternal &ctx, EngineConfigs &configs) override {
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize glfw");
 

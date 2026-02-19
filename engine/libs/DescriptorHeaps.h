@@ -21,7 +21,6 @@ struct DescriptorHandle {
 
 struct CbvSrvUavDescriptorHeap {
 private:
-    ID3D12Device *device = nullptr;
     const uint32_t MaxGpuDescriptors = 1000000;
     uint32_t numDescriptors = 0;
     uint32_t descriptorSize = 0;
@@ -36,8 +35,7 @@ private:
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuStart{};
 
 public:
-    void Initialize(ID3D12Device *dv, const BindlessHeapConfig &config, const EngineConfig &engineConfig) {
-        device = dv;
+    void Initialize(ID3D12Device *device, const BindlessHeapConfig &config, const EngineConfig &engineConfig) {
         numDescriptors = config.staticCapacity + config.reusableCapacity + (
                              config.dynamicCapacityPerFrame * FramesInFlightCount);
         if (numDescriptors > MaxGpuDescriptors) {
@@ -86,7 +84,7 @@ public:
         };
     }
 
-    DescriptorHandle AllocateStatic(ID3D12DescriptorHeap *cpuStagingHeap, const uint32_t count) {
+    DescriptorHandle AllocateStatic(ID3D12Device *device, ID3D12DescriptorHeap *cpuStagingHeap, const uint32_t count) {
 #ifdef _DEBUG
         const auto desc = cpuStagingHeap->GetDesc();
         if (desc.Flags != D3D12_DESCRIPTOR_HEAP_FLAG_NONE) {

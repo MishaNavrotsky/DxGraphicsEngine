@@ -12,7 +12,7 @@ add_library(Engine STATIC
         systems/SystemBase.h
         core/EngineContextInternal.h
         DxUtils.h
-        systems/DxQueueSystem.h
+        libs/DxQueues.h
         systems/window/WindowSystem.h
         core/Engine.h
         core/Engine.cpp
@@ -23,6 +23,7 @@ add_library(Engine STATIC
         core/EngineConfigs.h
         core/EngineContext.h
         systems/InputSystem.h
+        libs/CommandLists.h
 )
 
 target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)

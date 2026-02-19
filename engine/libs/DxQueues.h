@@ -4,28 +4,24 @@
 
 #pragma once
 
-#include "SystemBase.h"
 #include "engine/DxUtils.h"
-#include "engine/core/EngineContextInternal.h"
 
-class DxQueueSystem : public SystemBase {
+struct DxQueues {
 public:
-    explicit DxQueueSystem() = default;
-
-    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
+    void Initialize(ID3D12Device *device) {
         D3D12_COMMAND_QUEUE_DESC desc{};
         desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
         desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         desc.NodeMask = 0;
 
-        DX_CHECK(ctx.dx.device->CreateCommandQueue(&desc, IID_PPV_ARGS(&graphicsQueue)));
+        DX_CHECK(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&graphicsQueue)));
 
         desc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-        DX_CHECK(ctx.dx.device->CreateCommandQueue(&desc, IID_PPV_ARGS(&computeQueue)));
+        DX_CHECK(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&computeQueue)));
 
         desc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-        DX_CHECK(ctx.dx.device->CreateCommandQueue(&desc, IID_PPV_ARGS(&copyQueue)));
+        DX_CHECK(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&copyQueue)));
     }
 
     [[nodiscard]] ID3D12CommandQueue &GetGraphicsQueue() const {

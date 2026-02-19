@@ -14,7 +14,6 @@ struct DxContext {
     dx::ComPtr<IDXGIFactory6> factory;
     dx::ComPtr<IDXGIAdapter4> adapter;
     dx::ComPtr<D3D12MA::Allocator> allocator;
-    CbvSrvUavDescriptorHeap descriptorHeap;
 };
 
 struct EngineContextInternal {

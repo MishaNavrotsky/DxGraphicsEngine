@@ -6,21 +6,32 @@
 
 #include "engine/core/EngineContextInternal.h"
 #include "engine/systems/SystemBase.h"
-#include "engine/systems/window/SwapChainSystem.h"
 
 class RenderSystem : public SystemBase {
-    SwapChainSystem &swapChainSystem;
+    CbvSrvUavDescriptorHeap descriptorHeap{};
+    DxQueues dxQueues{};
 
 public:
-    explicit RenderSystem(SwapChainSystem &swapChainSystem) : swapChainSystem(swapChainSystem) {
-    };
+    explicit RenderSystem() = default;
 
-    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
+    void Initialize(EngineContextInternal &ctx, EngineConfigs &configs) override {
+        dxQueues.Initialize(ctx.dx.device.Get());
+        descriptorHeap.Initialize(
+            ctx.dx.device.Get(), configs.bindlessHeapConfig, configs.engineConfig
+        );
     }
 
     void BeginFrame(EngineContextInternal &ctx) {
     }
 
     void EndFrame(EngineContextInternal &ctx) {
+    }
+
+    CbvSrvUavDescriptorHeap &GetDescriptorHeap() {
+        return descriptorHeap;
+    }
+
+    DxQueues &GetDxQueues() {
+        return dxQueues;
     }
 };

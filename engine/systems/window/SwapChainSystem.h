@@ -9,11 +9,11 @@
 #include "engine/systems/SystemBase.h"
 #include "engine/core/EngineContextInternal.h"
 #include "engine/DxUtils.h"
-#include "engine/systems/DxQueueSystem.h"
+#include "../../libs/DxQueues.h"
+#include "engine/systems/render/RenderSystem.h"
 
 class SwapChainSystem : public SystemBase {
-    ID3D12Device *device = nullptr;
-    DxQueueSystem &queueSystem;
+    RenderSystem &renderSystem;
     HWND windowHandle;
 
     dx::ComPtr<IDXGISwapChain4> swapChain;
@@ -41,18 +41,17 @@ class SwapChainSystem : public SystemBase {
     std::vector<dx::ComPtr<ID3D12Resource> > renderTargets;
 
 public:
-    explicit SwapChainSystem(DxQueueSystem &queueSystem, HWND windowHandle) : queueSystem(queueSystem),
+    explicit SwapChainSystem(RenderSystem &renderSystem, HWND windowHandle) : renderSystem(renderSystem),
                                                                               windowHandle(windowHandle) {
     }
 
-    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
-        device = ctx.dx.device.Get();
+    void Initialize(EngineContextInternal &ctx, EngineConfigs &configs) override {
         buildSwapChainDesc(configs);
 
         dx::ComPtr<IDXGISwapChain1> swapChain1;
 
         DX_CHECK(ctx.dx.factory->CreateSwapChainForHwnd(
-            &queueSystem.GetGraphicsQueue(),
+            &renderSystem.GetDxQueues().GetGraphicsQueue(),
             windowHandle,
             &scDesc,
             nullptr,
@@ -64,7 +63,7 @@ public:
 
         DX_CHECK(ctx.dx.factory->MakeWindowAssociation(windowHandle, 0));
 
-        InitializeRtvDescriptorHeap();
+        InitializeRtvDescriptorHeap(ctx.dx.device.Get());
     }
 
     void Present(const WindowConfig &config) {
@@ -72,7 +71,7 @@ public:
         currentBackBufferIndex = swapChain->GetCurrentBackBufferIndex();
     }
 
-    void Resize(uint32_t width, uint32_t height) {
+    void Resize(ID3D12Device *device, uint32_t width, uint32_t height) {
         width = std::max(1u, width);
         height = std::max(1u, height);
 
@@ -90,7 +89,7 @@ public:
         scDesc.Width = width;
         scDesc.Height = height;
 
-        InitializeRtvDescriptorHeap();
+        InitializeRtvDescriptorHeap(device);
     }
 
     [[nodiscard]] ID3D12Resource *GetCurrentBackBuffer() const {
@@ -106,7 +105,7 @@ public:
     }
 
 private:
-    void InitializeRtvDescriptorHeap() {
+    void InitializeRtvDescriptorHeap(ID3D12Device *device) {
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
         rtvHeapDesc.NumDescriptors = scDesc.BufferCount;
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;

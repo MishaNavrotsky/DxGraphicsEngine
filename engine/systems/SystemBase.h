@@ -20,7 +20,7 @@ public:
 
     SystemBase &operator=(SystemBase &&) = delete;
 
-    virtual void Startup(EngineContextInternal &ctx, EngineConfigs &configs) {
+    virtual void Initialize(EngineContextInternal &ctx, EngineConfigs &configs) {
     };
 
     virtual void Shutdown() {

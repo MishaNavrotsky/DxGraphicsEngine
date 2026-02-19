@@ -10,7 +10,7 @@
 #include "engine/DxUtils.h"
 #include "engine/core/EngineContextInternal.h"
 
-#include "engine/systems/DxQueueSystem.h"
+#include "../libs/DxQueues.h"
 #include "engine/systems/InputSystem.h"
 #include "engine/systems/window/SwapChainSystem.h"
 #include "engine/systems/window/WindowSystem.h"
@@ -50,24 +50,21 @@ struct Engine::Impl {
     }
 
     void InitializeSystems() {
-        auto &queueSystem = context.systems.Register<DxQueueSystem>();
-        queueSystem.Startup(contextInternal, context.configs);
-
         auto &windowSystem = context.systems.Register<WindowSystem>();
-        windowSystem.Startup(contextInternal, context.configs);
+        windowSystem.Initialize(contextInternal, context.configs);
 
         auto &inputSystem = context.systems.Register<InputSystem>(windowSystem);
-        inputSystem.Startup(contextInternal, context.configs);
+        inputSystem.Initialize(contextInternal, context.configs);
 
-        auto &swapChainSystem = context.systems.Register<SwapChainSystem>(queueSystem, windowSystem.GetWindowHandle());
-        swapChainSystem.Startup(contextInternal, context.configs);
+        auto &renderSystem = context.systems.Register<RenderSystem>();
+        renderSystem.Initialize(contextInternal, context.configs);
 
-        auto &renderSystem = context.systems.Register<RenderSystem>(swapChainSystem);
-        renderSystem.Startup(contextInternal, context.configs);
+        auto &swapChainSystem = context.systems.Register<SwapChainSystem>(renderSystem, windowSystem.GetWindowHandle());
+        swapChainSystem.Initialize(contextInternal, context.configs);
 
         if (context.configs.uiConfig.enabled) {
-            auto &uiSystem = context.systems.Register<EditorUISystem>(windowSystem, queueSystem);
-            uiSystem.Startup(contextInternal, context.configs);
+            auto &uiSystem = context.systems.Register<EditorUISystem>(windowSystem, renderSystem);
+            uiSystem.Initialize(contextInternal, context.configs);
         }
     }
 
@@ -79,10 +76,6 @@ struct Engine::Impl {
         DX_CHECK(D3D12MA::CreateAllocator(&allocatorDesc, &contextInternal.dx.allocator));
     }
 
-    void InitializeDescriptorHeap() {
-        contextInternal.dx.descriptorHeap.Initialize(contextInternal.dx.device.Get(),
-                                                     context.configs.bindlessHeapConfig, context.configs.engineConfig);
-    }
 #ifdef _DEBUG
     static void InitializeDebug() {
         dx::ComPtr<ID3D12Debug> debugController;
@@ -135,7 +128,6 @@ void Engine::Initialize() {
     instance = std::unique_ptr<Engine>(new Engine());
     instance->pimpl->InitializeAdapter();
     instance->pimpl->InitializeAllocator();
-    instance->pimpl->InitializeDescriptorHeap();
     instance->pimpl->InitializeContext();
 #ifdef _DEBUG
     instance->pimpl->InitializeAdapterDebug();
