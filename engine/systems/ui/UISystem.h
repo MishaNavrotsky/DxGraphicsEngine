@@ -21,7 +21,7 @@
 class UISystem : public SystemBase {
     WindowSystem& windowSystem;
     QueueSystem& queueSystem;
-    CbvSrvUavDescriptorHeap* descriptorHeap;
+    CbvSrvUavDescriptorHeap* descriptorHeap = nullptr;
     ImGuiContext* imguiContext = nullptr;
     DescriptorHandle descriptorHandle{};
     uint32_t descriptorHeapOffset = 0;
