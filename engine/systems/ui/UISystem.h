@@ -24,7 +24,7 @@ class UISystem : public SystemBase {
     CbvSrvUavDescriptorHeap* descriptorHeap = nullptr;
     ImGuiContext* imguiContext = nullptr;
     DescriptorHandle descriptorHandle{};
-    uint32_t descriptorHeapOffset = 0;
+    BumpAllocator allocator{};
     const uint32_t DescriptorHeapSize = 256;
 public:
     explicit UISystem(WindowSystem& window, QueueSystem& queueSystem) : windowSystem(window), queueSystem(queueSystem) {
@@ -38,6 +38,7 @@ public:
         auto* device = ctx.dx.device.Get();
         assert(device != nullptr);
 
+        allocator.Initialize(0, DescriptorHeapSize);
         descriptorHandle = ctx.dx.descriptorHeap.AllocateStatic(DescriptorHeapSize);
 
         ImGui_ImplWin32_Init(windowSystem.GetWindowHandle());
@@ -54,12 +55,12 @@ public:
         init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) {
             auto& uiSystem = *static_cast<UISystem*>(info->UserData);
 
-            *out_cpu_handle = {uiSystem.descriptorHandle.startCpu.ptr + uiSystem.descriptorHeapOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
-            *out_gpu_handle = {uiSystem.descriptorHandle.startGpu.ptr + uiSystem.descriptorHeapOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
+            *out_cpu_handle = {uiSystem.descriptorHandle.startCpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
+            *out_gpu_handle = {uiSystem.descriptorHandle.startGpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
 
-            uiSystem.descriptorHeapOffset++;
+            const uint32_t index = uiSystem.allocator.Allocate(1);
 
-            assert(uiSystem.descriptorHeapOffset < uiSystem.DescriptorHeapSize);
+            assert(index != InvalidIndex);
         };
         init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) {
             auto& context = *static_cast<EngineContextInternal*>(info->UserData);
@@ -71,7 +72,7 @@ public:
 
 
     void BeginFrame(EngineContextInternal& ctx) {
-        descriptorHeapOffset = 0;
+        allocator.Reset();
         ImGui_ImplDX12_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();

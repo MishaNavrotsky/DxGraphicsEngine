@@ -30,7 +30,7 @@ private:
 
     RangeSlotAllocator staticAllocator;
     RangeSlotAllocator reusableAllocator;
-    std::array<FrameBumpAllocator, FramesInFlightCount> dynamicAllocators;
+    std::array<BumpAllocator, FramesInFlightCount> dynamicAllocators;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuStart{};
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuStart{};

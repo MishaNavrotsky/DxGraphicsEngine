@@ -81,18 +81,18 @@ struct RangeSlotAllocator {
     }
 };
 
-struct FrameBumpAllocator {
+struct BumpAllocator {
     uint32_t startOffset = 0;
     uint32_t capacity = 0;
     std::atomic<uint32_t> currentOffset{0};
 
-    FrameBumpAllocator() = default;
-    FrameBumpAllocator(FrameBumpAllocator&& other) noexcept {
+    BumpAllocator() = default;
+    BumpAllocator(BumpAllocator&& other) noexcept {
         startOffset = other.startOffset;
         capacity = other.capacity;
         currentOffset.store(other.currentOffset.load());
     };
-    FrameBumpAllocator& operator=(FrameBumpAllocator&& other) noexcept {
+    BumpAllocator& operator=(BumpAllocator&& other) noexcept {
         if (this != &other) {
             startOffset = other.startOffset;
             capacity = other.capacity;
