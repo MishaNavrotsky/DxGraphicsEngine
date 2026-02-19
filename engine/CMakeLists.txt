@@ -24,6 +24,7 @@ add_library(Engine STATIC
         core/EngineContext.h
         systems/InputSystem.h
         libs/CommandLists.h
+        Logger.h
 )
 
 target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
@@ -36,6 +37,7 @@ target_link_libraries(Engine
         ImGuiDX12
         enkiTS_wrapper
         entt_wrapper
+        spdlog_wrapper
 
         d3d12
         dxgi

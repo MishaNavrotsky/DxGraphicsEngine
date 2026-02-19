@@ -10,7 +10,7 @@
 #include "engine/DxUtils.h"
 #include "engine/core/EngineContextInternal.h"
 
-#include "../libs/DxQueues.h"
+#include "engine/Logger.h"
 #include "engine/systems/InputSystem.h"
 #include "engine/systems/window/SwapChainSystem.h"
 #include "engine/systems/window/WindowSystem.h"
@@ -81,9 +81,9 @@ struct Engine::Impl {
         dx::ComPtr<ID3D12Debug> debugController;
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
             debugController->EnableDebugLayer();
-            std::print("[DX12] Debug layer enabled\n");
+            ENG_LOG_INFO("[DX12] Debug layer enabled\n");
         } else {
-            std::print("[DX12] Debug layer not available (Graphics Tools missing)\n");
+            ENG_LOG_INFO("[DX12] Debug layer not available (Graphics Tools missing)\n");
         }
     }
 
@@ -95,14 +95,14 @@ struct Engine::Impl {
         DX12DebugSetup(contextInternal.dx.device.Get());
         std::atomic<bool> debugThreadStarted = false;
         adapterDebugThread = std::thread([&](const std::stop_token &st) {
-            std::print("[DX12] Debug polling thread started\n");
+            ENG_LOG_INFO("[DX12] Debug polling thread started\n");
             debugThreadStarted.store(true, std::memory_order_release);
 
             while (!st.stop_requested()) {
                 DX12DebugPoll();
             }
 
-            std::print("[DX12] Debug polling thread stopped\n");
+            ENG_LOG_INFO("[DX12] Debug polling thread stopped\n");
         }, adapterDebugThreadStopToken);
         while (!debugThreadStarted.load(std::memory_order_acquire)) {
             std::this_thread::yield(); // or sleep_for(1ms)
@@ -119,6 +119,7 @@ Engine::Engine() : pimpl(std::make_unique<Engine::Impl>()) {
 Engine::~Engine() = default;
 
 void Engine::Initialize() {
+    Logger::Initialize();
 #ifdef _DEBUG
     Engine::Impl::InitializeDebug();
 #endif

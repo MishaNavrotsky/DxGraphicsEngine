@@ -15,7 +15,7 @@ public:
 
     void Initialize(EngineContextInternal &ctx, EngineConfigs &configs) override {
         windowSystem.OnFramebufferSizeCallback = [this](uint32_t width, uint32_t height) {
-            std::print("Width {}, Height {}\n", width, height);
+            ENG_LOG_TRACE("Width {}, Height {}\n", width, height);
         };
     }
 };

@@ -6,6 +6,7 @@
 
 #include "engine/libs/Allocators.h"
 #include "engine/DxUtils.h"
+#include "engine/Logger.h"
 #include "engine/core/EngineConfigs.h"
 
 static constexpr uint32_t UnknownNumberDescriptors = UINT32_MAX;
@@ -88,11 +89,11 @@ public:
 #ifdef _DEBUG
         const auto desc = cpuStagingHeap->GetDesc();
         if (desc.Flags != D3D12_DESCRIPTOR_HEAP_FLAG_NONE) {
-            std::printf("[CbvSrvUavDescriptorHeap] Source heap must be NON-shader visible (CPU-only).\n");
+            ENG_LOG_TRACE("[CbvSrvUavDescriptorHeap] Source heap must be NON-shader visible (CPU-only).\n");
         }
         if (count > desc.NumDescriptors) {
-            std::printf("[CbvSrvUavDescriptorHeap] Count (%u) exceeds staging heap size (%u).\n", count,
-                        desc.NumDescriptors);
+            ENG_LOG_ERROR("[CbvSrvUavDescriptorHeap] Count (%u) exceeds staging heap size (%u).\n", count,
+                          desc.NumDescriptors);
         }
 #endif
 
