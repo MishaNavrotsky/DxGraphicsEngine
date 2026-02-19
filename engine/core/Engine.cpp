@@ -10,11 +10,12 @@
 #include "engine/DxUtils.h"
 #include "engine/core/EngineContextInternal.h"
 
-#include "engine/systems/QueueSystem.h"
+#include "engine/systems/DxQueueSystem.h"
+#include "engine/systems/InputSystem.h"
 #include "engine/systems/window/SwapChainSystem.h"
 #include "engine/systems/window/WindowSystem.h"
 #include "engine/systems/render/RenderSystem.h"
-#include "engine/systems/ui/UISystem.h"
+#include "engine/systems/ui/EditorUISystem.h"
 
 struct Engine::Impl {
     EngineContext context;
@@ -45,20 +46,23 @@ struct Engine::Impl {
         DX_CHECK(D3D12CreateDevice(contextInternal.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&contextInternal.dx.device)));
     }
     void InitializeSystems() {
-        auto &queueSystem = context.systems.Register<QueueSystem>();
+        auto& queueSystem = context.systems.Register<DxQueueSystem>();
         queueSystem.Startup(contextInternal, context.configs);
 
-        auto &windowSystem = context.systems.Register<WindowSystem>();
+        auto& windowSystem = context.systems.Register<WindowSystem>();
         windowSystem.Startup(contextInternal, context.configs);
 
-        auto &swapChainSystem = context.systems.Register<SwapChainSystem>(queueSystem, windowSystem.GetWindowHandle());
+        auto& inputSystem = context.systems.Register<InputSystem>(windowSystem);
+        inputSystem.Startup(contextInternal, context.configs);
+
+        auto& swapChainSystem = context.systems.Register<SwapChainSystem>(queueSystem, windowSystem.GetWindowHandle());
         swapChainSystem.Startup(contextInternal, context.configs);
 
-        auto &renderSystem = context.systems.Register<RenderSystem>(swapChainSystem);
+        auto& renderSystem = context.systems.Register<RenderSystem>(swapChainSystem);
         renderSystem.Startup(contextInternal, context.configs);
 
         if (context.configs.uiConfig.enabled) {
-            auto &uiSystem = context.systems.Register<UISystem>(windowSystem, queueSystem);
+            auto& uiSystem = context.systems.Register<EditorUISystem>(windowSystem, queueSystem);
             uiSystem.Startup(contextInternal, context.configs);
         }
     }
@@ -137,8 +141,27 @@ Engine &Engine::Get() {
 }
 
 void Engine::Run() {
-    const WindowSystem &windowSystem = instance->pimpl->context.systems.Get<WindowSystem>();
-    windowSystem.StartPolling(instance->pimpl->contextInternal);
+    auto& windowSystem = instance->pimpl->context.systems.Get<WindowSystem>();
+    auto* editorUISystem = instance->pimpl->context.systems.GetMaybe<EditorUISystem>();
+
+    auto& engine = instance->pimpl;
+
+    while (!engine->contextInternal.stopToken.stop_requested()) {
+        if (windowSystem.ShouldWindowClose()) {
+            engine->stopSource.request_stop();
+            //TODO: may have to do cleanup here
+            continue;
+        }
+        windowSystem.PollEvents();
+
+        if (editorUISystem) {
+
+        }
+
+
+
+    }
+    windowSystem.CloseWindow();
 }
 
 void Engine::Shutdown() {

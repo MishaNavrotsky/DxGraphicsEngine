@@ -12,16 +12,17 @@ add_library(Engine STATIC
         systems/SystemBase.h
         core/EngineContextInternal.h
         DxUtils.h
-        systems/QueueSystem.h
+        systems/DxQueueSystem.h
         systems/window/WindowSystem.h
         core/Engine.h
         core/Engine.cpp
         systems/render/RenderSystem.h
-        systems/ui/UISystem.h
+        systems/ui/EditorUISystem.h
         libs/Allocators.h
         libs/DescriptorHeaps.h
         core/EngineConfigs.h
         core/EngineContext.h
+        systems/InputSystem.h
 )
 
 target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)

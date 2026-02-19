@@ -8,9 +8,9 @@
 #include "engine/DxUtils.h"
 #include "engine/core/EngineContextInternal.h"
 
-class QueueSystem : public SystemBase {
+class DxQueueSystem : public SystemBase {
 public:
-    explicit QueueSystem() = default;
+    explicit DxQueueSystem() = default;
     void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
         D3D12_COMMAND_QUEUE_DESC desc{};
         desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;

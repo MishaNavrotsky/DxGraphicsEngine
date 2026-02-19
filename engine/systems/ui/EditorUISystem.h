@@ -18,16 +18,16 @@
 #include "engine/libs/DescriptorHeaps.h"
 #include "engine/systems/window/WindowSystem.h"
 
-class UISystem : public SystemBase {
+class EditorUISystem : public SystemBase {
     WindowSystem& windowSystem;
-    QueueSystem& queueSystem;
+    DxQueueSystem& queueSystem;
     CbvSrvUavDescriptorHeap* descriptorHeap = nullptr;
     ImGuiContext* imguiContext = nullptr;
     DescriptorHandle descriptorHandle{};
     BumpAllocator allocator{};
     const uint32_t DescriptorHeapSize = 256;
 public:
-    explicit UISystem(WindowSystem& window, QueueSystem& queueSystem) : windowSystem(window), queueSystem(queueSystem) {
+    explicit EditorUISystem(WindowSystem& window, DxQueueSystem& queueSystem) : windowSystem(window), queueSystem(queueSystem) {
         IMGUI_CHECKVERSION();
         imguiContext = ImGui::CreateContext();
     };
@@ -53,7 +53,7 @@ public:
 
         init_info.SrvDescriptorHeap = ctx.dx.descriptorHeap.Get();
         init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) {
-            auto& uiSystem = *static_cast<UISystem*>(info->UserData);
+            auto& uiSystem = *static_cast<EditorUISystem*>(info->UserData);
 
             *out_cpu_handle = {uiSystem.descriptorHandle.startCpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
             *out_gpu_handle = {uiSystem.descriptorHandle.startGpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;

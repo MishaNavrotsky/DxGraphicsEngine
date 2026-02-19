@@ -9,10 +9,10 @@
 #include "engine/systems/SystemBase.h"
 #include "engine/core/EngineContextInternal.h"
 #include "engine/DxUtils.h"
-#include "engine/systems/QueueSystem.h"
+#include "engine/systems/DxQueueSystem.h"
 
 class SwapChainSystem : public SystemBase {
-    QueueSystem& queueSystem;
+    DxQueueSystem& queueSystem;
     HWND windowHandle;
 
     dx::ComPtr<IDXGISwapChain4> swapChain;
@@ -39,7 +39,7 @@ class SwapChainSystem : public SystemBase {
     dx::ComPtr<ID3D12DescriptorHeap> rtvHeap;
     std::vector<dx::ComPtr<ID3D12Resource>> renderTargets;
 public:
-    explicit SwapChainSystem(QueueSystem& queueSystem, HWND windowHandle) : queueSystem(queueSystem), windowHandle(windowHandle) {}
+    explicit SwapChainSystem(DxQueueSystem& queueSystem, HWND windowHandle) : queueSystem(queueSystem), windowHandle(windowHandle) {}
 
     void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
         buildSwapChainDesc(configs);
