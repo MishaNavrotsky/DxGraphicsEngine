@@ -22,16 +22,14 @@ inline dx::ComPtr<ID3D12InfoQueue> _DebugInfoQueue = nullptr;
 
 
 // Call this once right after device creation
-inline void DX12DebugSetup(ID3D12Device* device)
-{
+inline void DX12DebugSetup(ID3D12Device *device) {
     if (!device) return;
 
     if (!SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&_DebugInfoQueue)))) {
         std::cerr << "[DX12 ERROR] Failed to query ID3D12InfoQueue" << std::endl;
     }
 
-    if (_DebugInfoQueue)
-    {
+    if (_DebugInfoQueue) {
         // if (!SUCCEEDED(_DebugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE))) {
         //     std::cerr << "[DX12 ERROR] SetBreakOnSeverity failed" << std::endl;
         // }
@@ -44,19 +42,17 @@ inline void DX12DebugSetup(ID3D12Device* device)
     }
 }
 
-inline void DX12DebugPoll()
-{
+inline void DX12DebugPoll() {
     if (!_DebugInfoQueue) return;
 
     const UINT64 numMessages = _DebugInfoQueue->GetNumStoredMessages();
-    for (UINT64 i = 0; i < numMessages; ++i)
-    {
+    for (UINT64 i = 0; i < numMessages; ++i) {
         SIZE_T msgLen = 0;
         if (!SUCCEEDED(_DebugInfoQueue->GetMessage(i, nullptr, &msgLen))) {
             std::cerr << "[DX12 ERROR] GetMessage failed" << std::endl;
         };
 
-        D3D12_MESSAGE* msg = static_cast<D3D12_MESSAGE *>(malloc(msgLen));
+        D3D12_MESSAGE *msg = static_cast<D3D12_MESSAGE *>(malloc(msgLen));
         if (!SUCCEEDED(_DebugInfoQueue->GetMessage(i, msg, &msgLen))) {
             std::cerr << "[DX12 ERROR] GetMessage failed" << std::endl;
         };
@@ -71,10 +67,9 @@ inline void DX12DebugPoll()
 #endif
 
 #ifndef _DEBUG
-inline void DX12DebugPoll() {};
+inline void DX12DebugPoll() {
+};
 #endif
-
-
 
 
 #define DX_CHECK(hr) do { \

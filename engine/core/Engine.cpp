@@ -25,6 +25,7 @@ struct Engine::Impl {
     void InitializeContext() {
         contextInternal.stopToken = stopSource.get_token();
     }
+
     void InitializeAdapter() {
         DX_CHECK(CreateDXGIFactory2(0, IID_PPV_ARGS(&contextInternal.dx.factory)));
 
@@ -40,32 +41,36 @@ struct Engine::Impl {
                 __uuidof(ID3D12Device),
                 nullptr))) {
                 break;
-                }
+            }
         }
         DX_CHECK(adapter.As(&contextInternal.dx.adapter));
-        DX_CHECK(D3D12CreateDevice(contextInternal.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&contextInternal.dx.device)));
+        DX_CHECK(
+            D3D12CreateDevice(contextInternal.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&contextInternal.dx
+                .device)));
     }
+
     void InitializeSystems() {
-        auto& queueSystem = context.systems.Register<DxQueueSystem>();
+        auto &queueSystem = context.systems.Register<DxQueueSystem>();
         queueSystem.Startup(contextInternal, context.configs);
 
-        auto& windowSystem = context.systems.Register<WindowSystem>();
+        auto &windowSystem = context.systems.Register<WindowSystem>();
         windowSystem.Startup(contextInternal, context.configs);
 
-        auto& inputSystem = context.systems.Register<InputSystem>(windowSystem);
+        auto &inputSystem = context.systems.Register<InputSystem>(windowSystem);
         inputSystem.Startup(contextInternal, context.configs);
 
-        auto& swapChainSystem = context.systems.Register<SwapChainSystem>(queueSystem, windowSystem.GetWindowHandle());
+        auto &swapChainSystem = context.systems.Register<SwapChainSystem>(queueSystem, windowSystem.GetWindowHandle());
         swapChainSystem.Startup(contextInternal, context.configs);
 
-        auto& renderSystem = context.systems.Register<RenderSystem>(swapChainSystem);
+        auto &renderSystem = context.systems.Register<RenderSystem>(swapChainSystem);
         renderSystem.Startup(contextInternal, context.configs);
 
         if (context.configs.uiConfig.enabled) {
-            auto& uiSystem = context.systems.Register<EditorUISystem>(windowSystem, queueSystem);
+            auto &uiSystem = context.systems.Register<EditorUISystem>(windowSystem, queueSystem);
             uiSystem.Startup(contextInternal, context.configs);
         }
     }
+
     void InitializeAllocator() {
         D3D12MA::ALLOCATOR_DESC allocatorDesc = {};
         allocatorDesc.pDevice = contextInternal.dx.device.Get();
@@ -80,18 +85,19 @@ struct Engine::Impl {
     }
 #ifdef _DEBUG
     static void InitializeDebug() {
-            dx::ComPtr<ID3D12Debug> debugController;
-            if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
-                debugController->EnableDebugLayer();
-                std::print("[DX12] Debug layer enabled\n");
-            } else {
-                std::print("[DX12] Debug layer not available (Graphics Tools missing)\n");
-            }
+        dx::ComPtr<ID3D12Debug> debugController;
+        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
+            debugController->EnableDebugLayer();
+            std::print("[DX12] Debug layer enabled\n");
+        } else {
+            std::print("[DX12] Debug layer not available (Graphics Tools missing)\n");
+        }
     }
 
     std::thread adapterDebugThread;
     std::stop_source adapterDebugThreadStopSource;
     std::stop_token adapterDebugThreadStopToken = adapterDebugThreadStopSource.get_token();
+
     void InitializeAdapterDebug() {
         DX12DebugSetup(contextInternal.dx.device.Get());
         std::atomic<bool> debugThreadStarted = false;
@@ -114,7 +120,9 @@ struct Engine::Impl {
 
 std::unique_ptr<Engine> Engine::instance = nullptr;
 
-Engine::Engine() : pimpl(std::make_unique<Engine::Impl>()) {}
+Engine::Engine() : pimpl(std::make_unique<Engine::Impl>()) {
+}
+
 Engine::~Engine() = default;
 
 void Engine::Initialize() {
@@ -141,10 +149,10 @@ Engine &Engine::Get() {
 }
 
 void Engine::Run() {
-    auto& windowSystem = instance->pimpl->context.systems.Get<WindowSystem>();
-    auto* editorUISystem = instance->pimpl->context.systems.GetMaybe<EditorUISystem>();
+    auto &windowSystem = instance->pimpl->context.systems.Get<WindowSystem>();
+    auto *editorUISystem = instance->pimpl->context.systems.GetMaybe<EditorUISystem>();
 
-    auto& engine = instance->pimpl;
+    auto &engine = instance->pimpl;
 
     while (!engine->contextInternal.stopToken.stop_requested()) {
         if (windowSystem.ShouldWindowClose()) {
@@ -155,11 +163,8 @@ void Engine::Run() {
         windowSystem.PollEvents();
 
         if (editorUISystem) {
-
+            // editorUISystem->BeginFrame(engine->contextInternal);
         }
-
-
-
     }
     windowSystem.CloseWindow();
 }

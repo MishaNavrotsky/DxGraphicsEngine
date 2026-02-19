@@ -13,13 +13,16 @@ class Engine {
 public:
     ~Engine();
 
-    Engine(const Engine&) = delete;
-    Engine& operator=(const Engine&) = delete;
+    Engine(const Engine &) = delete;
+
+    Engine &operator=(const Engine &) = delete;
 
     static void Initialize();
-    static Engine& Get();
+
+    static Engine &Get();
 
     static void Run();
+
     static void Shutdown();
 
 private:
@@ -30,4 +33,3 @@ private:
 
     static std::unique_ptr<Engine> instance;
 };
-

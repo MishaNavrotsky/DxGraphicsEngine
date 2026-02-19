@@ -11,7 +11,8 @@
 class DxQueueSystem : public SystemBase {
 public:
     explicit DxQueueSystem() = default;
-    void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
+
+    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
         D3D12_COMMAND_QUEUE_DESC desc{};
         desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -27,13 +28,15 @@ public:
         DX_CHECK(ctx.dx.device->CreateCommandQueue(&desc, IID_PPV_ARGS(&copyQueue)));
     }
 
-    [[nodiscard]] ID3D12CommandQueue& GetGraphicsQueue() const {
+    [[nodiscard]] ID3D12CommandQueue &GetGraphicsQueue() const {
         return *graphicsQueue.Get();
     };
-    [[nodiscard]] ID3D12CommandQueue& GetComputeQueue() const {
+
+    [[nodiscard]] ID3D12CommandQueue &GetComputeQueue() const {
         return *computeQueue.Get();
     };
-    [[nodiscard]] ID3D12CommandQueue& GetCopyQueue() const {
+
+    [[nodiscard]] ID3D12CommandQueue &GetCopyQueue() const {
         return *copyQueue.Get();
     };
 

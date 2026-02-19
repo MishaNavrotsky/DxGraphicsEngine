@@ -6,8 +6,7 @@
 
 #include <wrl/client.h>
 
-namespace dx
-{
+namespace dx {
     template<typename T>
     using ComPtr = Microsoft::WRL::ComPtr<T>;
 }

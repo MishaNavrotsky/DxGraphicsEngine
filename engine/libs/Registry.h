@@ -10,56 +10,66 @@
 
 #include <stdexcept>
 
-template <typename Base>
+template<typename Base>
 class Registry {
-    using Map = std::unordered_map<std::type_index, std::unique_ptr<Base>>;
+    using Map = std::unordered_map<std::type_index, std::unique_ptr<Base> >;
+
 public:
     Registry() = default;
+
     ~Registry() = default;
-    Registry(const Registry&) = delete;
-    Registry& operator=(const Registry&) = delete;
-    Registry(Registry&&) = delete;
-    Registry& operator=(Registry&&) = delete;
+
+    Registry(const Registry &) = delete;
+
+    Registry &operator=(const Registry &) = delete;
+
+    Registry(Registry &&) = delete;
+
+    Registry &operator=(Registry &&) = delete;
+
     template<typename T>
-    T& Get() {
+    T &Get() {
         const auto it = items.find(typeid(T));
         if (it == items.end())
             throw std::runtime_error("System not registered");
-        return *static_cast<T*>(it->second.get());
+        return *static_cast<T *>(it->second.get());
     }
-    template <typename T>
-    T* GetMaybe() {
+
+    template<typename T>
+    T *GetMaybe() {
         const auto it = items.find(typeid(T));
         if (it == items.end()) {
             return nullptr;
         }
-        return static_cast<T*>(it->second.get());
+        return static_cast<T *>(it->second.get());
     }
+
     template<typename T, typename... Args>
-    T& Register(Args &&... args) {
+    T &Register(Args &&... args) {
         const auto type = std::type_index(typeid(T));
         if (items.contains(type)) throw std::runtime_error("System already registered");
 
         auto sys = std::make_unique<T>(std::forward<Args>(args)...);
-        T& ref = *sys;
+        T &ref = *sys;
         items[type] = std::move(sys);
         return ref;
     }
+
     template<typename T>
-    T& Register(std::unique_ptr<T> args) {
+    T &Register(std::unique_ptr<T> args) {
         const auto type = std::type_index(typeid(T));
         if (items.contains(type))
             throw std::runtime_error("System already registered");
 
-        T& ref = *args;
+        T &ref = *args;
         items[type] = std::move(args);
         return ref;
     }
-    Map& GetItems() {
+
+    Map &GetItems() {
         return items;
     }
+
 private:
     Map items;
 };
-
-

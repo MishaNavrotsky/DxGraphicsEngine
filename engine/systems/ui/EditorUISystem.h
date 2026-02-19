@@ -19,23 +19,26 @@
 #include "engine/systems/window/WindowSystem.h"
 
 class EditorUISystem : public SystemBase {
-    WindowSystem& windowSystem;
-    DxQueueSystem& queueSystem;
-    CbvSrvUavDescriptorHeap* descriptorHeap = nullptr;
-    ImGuiContext* imguiContext = nullptr;
+    WindowSystem &windowSystem;
+    DxQueueSystem &queueSystem;
+    CbvSrvUavDescriptorHeap *descriptorHeap = nullptr;
+    ImGuiContext *imguiContext = nullptr;
     DescriptorHandle descriptorHandle{};
     BumpAllocator allocator{};
     const uint32_t DescriptorHeapSize = 256;
+
 public:
-    explicit EditorUISystem(WindowSystem& window, DxQueueSystem& queueSystem) : windowSystem(window), queueSystem(queueSystem) {
+    explicit EditorUISystem(WindowSystem &window, DxQueueSystem &queueSystem) : windowSystem(window),
+        queueSystem(queueSystem) {
         IMGUI_CHECKVERSION();
         imguiContext = ImGui::CreateContext();
     };
-    void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
+
+    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
         descriptorHeap = &ctx.dx.descriptorHeap;
         const HWND windowHandle = windowSystem.GetWindowHandle();
         assert(windowHandle != nullptr);
-        auto* device = ctx.dx.device.Get();
+        auto *device = ctx.dx.device.Get();
         assert(device != nullptr);
 
         allocator.Initialize(0, DescriptorHeapSize);
@@ -52,26 +55,33 @@ public:
         init_info.UserData = this;
 
         init_info.SrvDescriptorHeap = ctx.dx.descriptorHeap.Get();
-        init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) {
-            auto& uiSystem = *static_cast<EditorUISystem*>(info->UserData);
+        init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo *info, D3D12_CPU_DESCRIPTOR_HANDLE *out_cpu_handle,
+                                            D3D12_GPU_DESCRIPTOR_HANDLE *out_gpu_handle) {
+            auto &uiSystem = *static_cast<EditorUISystem *>(info->UserData);
 
-            *out_cpu_handle = {uiSystem.descriptorHandle.startCpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
-            *out_gpu_handle = {uiSystem.descriptorHandle.startGpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->GetDescriptorHandleIncrementSize()};;
+            *out_cpu_handle = {
+                uiSystem.descriptorHandle.startCpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->
+                GetDescriptorHandleIncrementSize()
+            };;
+            *out_gpu_handle = {
+                uiSystem.descriptorHandle.startGpu.ptr + uiSystem.allocator.currentOffset * uiSystem.descriptorHeap->
+                GetDescriptorHandleIncrementSize()
+            };;
 
             const uint32_t index = uiSystem.allocator.Allocate(1);
 
             assert(index != InvalidIndex);
         };
-        init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) {
-            auto& context = *static_cast<EngineContextInternal*>(info->UserData);
+        init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo *info, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle,
+                                           D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) {
+            auto &context = *static_cast<EngineContextInternal *>(info->UserData);
             //TODO: for now there is no way to clear allocated descriptor heap slots and I'm not sure if it is needed if SrvDescriptorAllocFn runs per frame for each required resource
         };
         ImGui_ImplDX12_Init(&init_info);
     }
 
 
-
-    void BeginFrame(EngineContextInternal& ctx) {
+    void BeginFrame(EngineContextInternal &ctx) {
         allocator.Reset();
         ImGui_ImplDX12_NewFrame();
         ImGui_ImplWin32_NewFrame();
@@ -81,10 +91,10 @@ public:
         ImGui::ShowDemoWindow(&open);
     }
 
-    void EndFrame(EngineContextInternal& ctx, ID3D12GraphicsCommandList* commandList) {
+    void EndFrame(EngineContextInternal &ctx, ID3D12GraphicsCommandList *commandList) {
         ImGui::Render();
 
-        ID3D12DescriptorHeap* heaps[] = { descriptorHeap->Get() };
+        ID3D12DescriptorHeap *heaps[] = {descriptorHeap->Get()};
         commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
@@ -98,5 +108,5 @@ public:
         }
     }
 
-    [[nodiscard]] ImGuiContext* GetContext() const { return imguiContext; }
+    [[nodiscard]] ImGuiContext *GetContext() const { return imguiContext; }
 };

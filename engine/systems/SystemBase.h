@@ -12,11 +12,17 @@ public:
 
     virtual ~SystemBase() = default;
 
-    SystemBase(const SystemBase&) = delete;
-    SystemBase& operator=(const SystemBase&) = delete;
-    SystemBase(SystemBase&&) = delete;
-    SystemBase& operator=(SystemBase&&) = delete;
+    SystemBase(const SystemBase &) = delete;
 
-    virtual void Startup(EngineContextInternal& ctx, EngineConfigs& configs) {};
-    virtual void Shutdown() {};
+    SystemBase &operator=(const SystemBase &) = delete;
+
+    SystemBase(SystemBase &&) = delete;
+
+    SystemBase &operator=(SystemBase &&) = delete;
+
+    virtual void Startup(EngineContextInternal &ctx, EngineConfigs &configs) {
+    };
+
+    virtual void Shutdown() {
+    };
 };

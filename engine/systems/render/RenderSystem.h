@@ -9,18 +9,18 @@
 #include "engine/systems/window/SwapChainSystem.h"
 
 class RenderSystem : public SystemBase {
-    SwapChainSystem& swapChainSystem;
+    SwapChainSystem &swapChainSystem;
 
 public:
-    explicit RenderSystem(SwapChainSystem& swapChainSystem) : swapChainSystem(swapChainSystem) {};
+    explicit RenderSystem(SwapChainSystem &swapChainSystem) : swapChainSystem(swapChainSystem) {
+    };
 
-    void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
+    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
     }
 
-    void BeginFrame(EngineContextInternal& ctx) {
-
+    void BeginFrame(EngineContextInternal &ctx) {
     }
-    void EndFrame(EngineContextInternal& ctx) {
 
+    void EndFrame(EngineContextInternal &ctx) {
     }
 };

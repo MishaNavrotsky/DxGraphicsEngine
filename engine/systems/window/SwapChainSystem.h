@@ -12,18 +12,19 @@
 #include "engine/systems/DxQueueSystem.h"
 
 class SwapChainSystem : public SystemBase {
-    DxQueueSystem& queueSystem;
+    ID3D12Device *device = nullptr;
+    DxQueueSystem &queueSystem;
     HWND windowHandle;
 
     dx::ComPtr<IDXGISwapChain4> swapChain;
-    DXGI_FORMAT swapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    const DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     DXGI_SWAP_CHAIN_DESC1 scDesc{};
 
     void buildSwapChainDesc(const EngineConfigs &configs) {
         scDesc = {
             .Width = std::max(1u, configs.window.width),
             .Height = std::max(1u, configs.window.height),
-            .Format = swapChainFormat,
+            .Format = SwapChainFormat,
             .SampleDesc = {.Count = 1, .Quality = 0},
             .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
             .BufferCount = configs.swapChain.bufferCount,
@@ -37,11 +38,15 @@ class SwapChainSystem : public SystemBase {
 
     size_t rtvDescriptorSize = 0;
     dx::ComPtr<ID3D12DescriptorHeap> rtvHeap;
-    std::vector<dx::ComPtr<ID3D12Resource>> renderTargets;
-public:
-    explicit SwapChainSystem(DxQueueSystem& queueSystem, HWND windowHandle) : queueSystem(queueSystem), windowHandle(windowHandle) {}
+    std::vector<dx::ComPtr<ID3D12Resource> > renderTargets;
 
-    void Startup(EngineContextInternal& ctx, EngineConfigs& configs) override {
+public:
+    explicit SwapChainSystem(DxQueueSystem &queueSystem, HWND windowHandle) : queueSystem(queueSystem),
+                                                                              windowHandle(windowHandle) {
+    }
+
+    void Startup(EngineContextInternal &ctx, EngineConfigs &configs) override {
+        device = ctx.dx.device.Get();
         buildSwapChainDesc(configs);
 
         dx::ComPtr<IDXGISwapChain1> swapChain1;
@@ -59,15 +64,36 @@ public:
 
         DX_CHECK(ctx.dx.factory->MakeWindowAssociation(windowHandle, 0));
 
-        InitializeRtvDescriptorHeap(ctx.dx.device.Get());
+        InitializeRtvDescriptorHeap();
     }
 
-    void Present(const WindowConfig& config) {
+    void Present(const WindowConfig &config) {
         DX_CHECK(swapChain->Present(config.vsync, 0));
         currentBackBufferIndex = swapChain->GetCurrentBackBufferIndex();
     }
 
-    [[nodiscard]] ID3D12Resource* GetCurrentBackBuffer() const {
+    void Resize(uint32_t width, uint32_t height) {
+        width = std::max(1u, width);
+        height = std::max(1u, height);
+
+        for (auto &target: renderTargets) {
+            target.Reset();
+        }
+
+        DX_CHECK(swapChain->ResizeBuffers(
+            scDesc.BufferCount,
+            width, height,
+            SwapChainFormat,
+            0));
+
+        currentBackBufferIndex = swapChain->GetCurrentBackBufferIndex();
+        scDesc.Width = width;
+        scDesc.Height = height;
+
+        InitializeRtvDescriptorHeap();
+    }
+
+    [[nodiscard]] ID3D12Resource *GetCurrentBackBuffer() const {
         return renderTargets[currentBackBufferIndex].Get();
     }
 
@@ -78,8 +104,9 @@ public:
             rtvDescriptorSize
         );
     }
+
 private:
-    void InitializeRtvDescriptorHeap(ID3D12Device* device) {
+    void InitializeRtvDescriptorHeap() {
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
         rtvHeapDesc.NumDescriptors = scDesc.BufferCount;
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -92,11 +119,10 @@ private:
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart());
 
         uint32_t i = 0;
-        for (auto& target : renderTargets) {
+        for (auto &target: renderTargets) {
             DX_CHECK(swapChain->GetBuffer(i++, IID_PPV_ARGS(&target)));
             device->CreateRenderTargetView(target.Get(), nullptr, rtvHandle);
             rtvHandle.Offset(1, rtvDescriptorSize);
         }
     }
 };
-

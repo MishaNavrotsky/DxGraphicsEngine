@@ -21,7 +21,7 @@ struct DescriptorHandle {
 
 struct CbvSrvUavDescriptorHeap {
 private:
-    ID3D12Device* device = nullptr;
+    ID3D12Device *device = nullptr;
     const uint32_t MaxGpuDescriptors = 1000000;
     uint32_t numDescriptors = 0;
     uint32_t descriptorSize = 0;
@@ -36,9 +36,10 @@ private:
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuStart{};
 
 public:
-    void Initialize(ID3D12Device* dv, const BindlessHeapConfig& config, const EngineConfig& engineConfig) {
+    void Initialize(ID3D12Device *dv, const BindlessHeapConfig &config, const EngineConfig &engineConfig) {
         device = dv;
-        numDescriptors = config.staticCapacity + config.reusableCapacity + (config.dynamicCapacityPerFrame * FramesInFlightCount);
+        numDescriptors = config.staticCapacity + config.reusableCapacity + (
+                             config.dynamicCapacityPerFrame * FramesInFlightCount);
         if (numDescriptors > MaxGpuDescriptors) {
             throw std::runtime_error("[CbvSrvUavDescriptorHeap] Too many descriptors per GPU descriptor heap");
         }
@@ -69,29 +70,31 @@ public:
         }
     }
 
-    [[nodiscard]] ID3D12DescriptorHeap* Get() const {
+    [[nodiscard]] ID3D12DescriptorHeap *Get() const {
         return heap.Get();
     }
 
-    [[nodiscard]] DescriptorHandle GetHandle(const uint32_t index, const uint32_t size = UnknownNumberDescriptors) const {
+    [[nodiscard]] DescriptorHandle
+    GetHandle(const uint32_t index, const uint32_t size = UnknownNumberDescriptors) const {
         if (index == InvalidIndex) return {};
 
         return {
             index,
             size,
-            { cpuStart.ptr + index * descriptorSize },
-            { gpuStart.ptr + index * descriptorSize },
+            {cpuStart.ptr + index * descriptorSize},
+            {gpuStart.ptr + index * descriptorSize},
         };
     }
 
-    DescriptorHandle AllocateStatic(ID3D12DescriptorHeap* cpuStagingHeap, const uint32_t count) {
+    DescriptorHandle AllocateStatic(ID3D12DescriptorHeap *cpuStagingHeap, const uint32_t count) {
 #ifdef _DEBUG
         const auto desc = cpuStagingHeap->GetDesc();
         if (desc.Flags != D3D12_DESCRIPTOR_HEAP_FLAG_NONE) {
             std::printf("[CbvSrvUavDescriptorHeap] Source heap must be NON-shader visible (CPU-only).\n");
         }
         if (count > desc.NumDescriptors) {
-            std::printf("[CbvSrvUavDescriptorHeap] Count (%u) exceeds staging heap size (%u).\n", count, desc.NumDescriptors);
+            std::printf("[CbvSrvUavDescriptorHeap] Count (%u) exceeds staging heap size (%u).\n", count,
+                        desc.NumDescriptors);
         }
 #endif
 
@@ -101,11 +104,11 @@ public:
         const auto handle = GetHandle(startIndex, count);
 
         device->CopyDescriptorsSimple(
-                count,
-                handle.startCpu,
-                cpuStagingHeap->GetCPUDescriptorHandleForHeapStart(),
-                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-            );
+            count,
+            handle.startCpu,
+            cpuStagingHeap->GetCPUDescriptorHandleForHeapStart(),
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        );
         return handle;
     }
 

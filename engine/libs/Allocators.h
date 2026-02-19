@@ -15,7 +15,7 @@ struct Range {
     uint32_t offset;
     uint32_t size;
 
-    [[nodiscard]] bool IsAdjacent(const Range& other) const {
+    [[nodiscard]] bool IsAdjacent(const Range &other) const {
         return offset + size == other.offset || other.offset + other.size == offset;
     }
 };
@@ -57,10 +57,10 @@ struct RangeSlotAllocator {
     void Free(const uint32_t offset, const uint32_t numSlots) {
         std::lock_guard<std::mutex> lock(allocationMutex);
 
-        const Range newRange = { offset, numSlots };
+        const Range newRange = {offset, numSlots};
 
         const auto it = std::ranges::lower_bound(freeRanges, newRange,
-                                                 [](const Range& a, const Range& b) { return a.offset < b.offset; });
+                                                 [](const Range &a, const Range &b) { return a.offset < b.offset; });
 
         const size_t idx = std::distance(freeRanges.begin(), it);
         freeRanges.insert(it, newRange);
@@ -87,12 +87,14 @@ struct BumpAllocator {
     std::atomic<uint32_t> currentOffset{0};
 
     BumpAllocator() = default;
-    BumpAllocator(BumpAllocator&& other) noexcept {
+
+    BumpAllocator(BumpAllocator &&other) noexcept {
         startOffset = other.startOffset;
         capacity = other.capacity;
         currentOffset.store(other.currentOffset.load());
     };
-    BumpAllocator& operator=(BumpAllocator&& other) noexcept {
+
+    BumpAllocator &operator=(BumpAllocator &&other) noexcept {
         if (this != &other) {
             startOffset = other.startOffset;
             capacity = other.capacity;
