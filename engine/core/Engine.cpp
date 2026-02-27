@@ -64,7 +64,7 @@ struct Engine::Impl {
         inputSystem.Initialize(contextInternal, context.configs);
 
         if (context.configs.uiConfig.enabled) {
-            auto &uiSystem = context.systems.Register<EditorUISystem>(windowSystem, renderSystem);
+            auto &uiSystem = context.systems.Register<EditorUISystem>(windowSystem, inputSystem, renderSystem);
             uiSystem.Initialize(contextInternal, context.configs);
         }
     }

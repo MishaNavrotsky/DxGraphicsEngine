@@ -18,16 +18,75 @@
 #include "engine/libs/DescriptorHeaps.h"
 #include "engine/systems/window/WindowSystem.h"
 
+inline ImGuiKey MapGlfwKeyToImGui(int32_t key) {
+    // Direct mappings for letters and numbers
+    if (key >= 48 && key <= 57) return (ImGuiKey) (ImGuiKey_0 + (key - 48)); // 0-9
+    if (key >= 65 && key <= 90) return (ImGuiKey) (ImGuiKey_A + (key - 65)); // A-Z
+    if (key >= 290 && key <= 301) return (ImGuiKey) (ImGuiKey_F1 + (key - 290)); // F1-F12
+
+    switch (key) {
+        // Special keys
+        case 256: return ImGuiKey_Escape;
+        case 257: return ImGuiKey_Enter;
+        case 258: return ImGuiKey_Tab;
+        case 259: return ImGuiKey_Backspace;
+        case 260: return ImGuiKey_Insert;
+        case 261: return ImGuiKey_Delete;
+        case 262: return ImGuiKey_RightArrow;
+        case 263: return ImGuiKey_LeftArrow;
+        case 264: return ImGuiKey_DownArrow;
+        case 265: return ImGuiKey_UpArrow;
+        case 266: return ImGuiKey_PageUp;
+        case 267: return ImGuiKey_PageDown;
+        case 268: return ImGuiKey_Home;
+        case 269: return ImGuiKey_End;
+        case 280: return ImGuiKey_CapsLock;
+        case 281: return ImGuiKey_ScrollLock;
+        case 282: return ImGuiKey_NumLock;
+        case 283: return ImGuiKey_PrintScreen;
+        case 284: return ImGuiKey_Pause;
+
+        // Modifiers
+        case 340: return ImGuiKey_LeftShift;
+        case 341: return ImGuiKey_LeftCtrl;
+        case 342: return ImGuiKey_LeftAlt;
+        case 343: return ImGuiKey_LeftSuper;
+        case 344: return ImGuiKey_RightShift;
+        case 345: return ImGuiKey_RightCtrl;
+        case 346: return ImGuiKey_RightAlt;
+        case 347: return ImGuiKey_RightSuper;
+
+        // Symbols
+        case 32: return ImGuiKey_Space;
+        case 39: return ImGuiKey_Apostrophe;
+        case 44: return ImGuiKey_Comma;
+        case 45: return ImGuiKey_Minus;
+        case 46: return ImGuiKey_Period;
+        case 47: return ImGuiKey_Slash;
+        case 59: return ImGuiKey_Semicolon;
+        case 61: return ImGuiKey_Equal;
+        case 91: return ImGuiKey_LeftBracket;
+        case 92: return ImGuiKey_Backslash;
+        case 93: return ImGuiKey_RightBracket;
+        case 96: return ImGuiKey_GraveAccent;
+
+        default: return ImGuiKey_None;
+    }
+}
+
 class EditorUISystem : public SystemBase {
     WindowSystem &windowSystem;
     RenderSystem &renderSystem;
+    InputSystem &inputSystem;
     ImGuiContext *imguiContext = nullptr;
     DescriptorHandle descriptorHandle{};
     BumpAllocator allocator{};
     const uint32_t DescriptorHeapSize = 256;
 
 public:
-    explicit EditorUISystem(WindowSystem &window, RenderSystem &renderSystem) : windowSystem(window),
+    explicit EditorUISystem(WindowSystem &window, InputSystem &inputSystem, RenderSystem &renderSystem
+    ) : windowSystem(window), inputSystem(inputSystem),
+
         renderSystem(renderSystem) {
         IMGUI_CHECKVERSION();
         imguiContext = ImGui::CreateContext();
@@ -77,9 +136,33 @@ public:
         };
         ImGui_ImplDX12_Init(&init_info);
 
-        ImGuiIO &io = ImGui::GetIO();
-        io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
-        io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+        inputSystem.OnKey.Subscribe([](int32_t key, int32_t scancode, int32_t action, int32_t mods) {
+            ImGuiIO &io = ImGui::GetIO();
+            ImGuiKey imguiKey = MapGlfwKeyToImGui(key);
+
+            io.AddKeyEvent(imguiKey, (action != 0));
+
+            io.AddKeyEvent(ImGuiMod_Ctrl, (mods & 0x0002) != 0);
+            io.AddKeyEvent(ImGuiMod_Shift, (mods & 0x0001) != 0);
+            io.AddKeyEvent(ImGuiMod_Alt, (mods & 0x0004) != 0);
+            io.AddKeyEvent(ImGuiMod_Super, (mods & 0x0008) != 0);
+        });
+
+        inputSystem.OnCursorPos.Subscribe([](double xpos, double ypos) {
+            ImGui::GetIO().AddMousePosEvent((float) xpos, (float) ypos);
+        });
+
+        inputSystem.OnMouseButton.Subscribe([](int32_t button, int32_t action, int32_t mods) {
+            ImGui::GetIO().AddMouseButtonEvent(button, action != 0);
+        });
+
+        inputSystem.OnScroll.Subscribe([](double xoffset, double yoffset) {
+            ImGui::GetIO().AddMouseWheelEvent((float) xoffset, (float) yoffset);
+        });
+
+        inputSystem.OnChar.Subscribe([](uint32_t codepoint) {
+            ImGui::GetIO().AddInputCharacter(codepoint);
+        });
     }
 
 
