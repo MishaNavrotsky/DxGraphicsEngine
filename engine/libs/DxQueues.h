@@ -24,16 +24,16 @@ public:
         DX_CHECK(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&copyQueue)));
     }
 
-    [[nodiscard]] ID3D12CommandQueue &GetGraphicsQueue() const {
-        return *graphicsQueue.Get();
+    [[nodiscard]] ID3D12CommandQueue *GetGraphicsQueue() const {
+        return graphicsQueue.Get();
     };
 
-    [[nodiscard]] ID3D12CommandQueue &GetComputeQueue() const {
-        return *computeQueue.Get();
+    [[nodiscard]] ID3D12CommandQueue *GetComputeQueue() const {
+        return computeQueue.Get();
     };
 
-    [[nodiscard]] ID3D12CommandQueue &GetCopyQueue() const {
-        return *copyQueue.Get();
+    [[nodiscard]] ID3D12CommandQueue *GetCopyQueue() const {
+        return copyQueue.Get();
     };
 
 private:

@@ -46,7 +46,7 @@ public:
 
         ImGui_ImplDX12_InitInfo init_info = {};
         init_info.Device = device;
-        init_info.CommandQueue = &renderSystem.GetDxQueues().GetGraphicsQueue();
+        init_info.CommandQueue = renderSystem.GetDxQueues().GetGraphicsQueue();
         init_info.NumFramesInFlight = static_cast<int32_t>(configs.swapChain.bufferCount);
         init_info.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
         init_info.DSVFormat = DXGI_FORMAT_UNKNOWN;
@@ -76,6 +76,10 @@ public:
             //TODO: for now there is no way to clear allocated descriptor heap slots and I'm not sure if it is needed if SrvDescriptorAllocFn runs per frame for each required resource
         };
         ImGui_ImplDX12_Init(&init_info);
+
+        ImGuiIO &io = ImGui::GetIO();
+        io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+        io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
     }
 
 

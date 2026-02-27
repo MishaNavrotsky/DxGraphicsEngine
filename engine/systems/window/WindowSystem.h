@@ -19,6 +19,7 @@
 class WindowSystem : public SystemBase {
     GLFWwindow *window = nullptr;
     HWND windowHandle = nullptr;
+    std::array<int32_t, 2> windowSize{};
 
 public:
     explicit WindowSystem() = default;
@@ -42,6 +43,7 @@ public:
             static_cast<int32_t>(configs.window.width), static_cast<int32_t>(configs.window.height),
             Globals::PROJ_NAME.data(), nullptr, nullptr
         );
+        windowSize = {static_cast<int32_t>(configs.window.width), static_cast<int32_t>(configs.window.height)};
 
         windowHandle = glfwGetWin32Window(window);
         glfwSetWindowUserPointer(window, this);
@@ -84,8 +86,9 @@ public:
                               });
         glfwSetFramebufferSizeCallback(window,
                                        [](GLFWwindow *window, const int32_t width, const int32_t height) {
-                                           const auto *instance = static_cast<WindowSystem *>(
+                                           auto *instance = static_cast<WindowSystem *>(
                                                glfwGetWindowUserPointer(window));
+                                           instance->windowSize = {width, height};
                                            if (instance && instance->OnFramebufferSizeCallback)
                                                instance->OnFramebufferSizeCallback(width, height);
                                        });
@@ -118,7 +121,15 @@ public:
         glfwTerminate();
     }
 
+    std::array<int32_t, 2> GetWindowSize() const {
+        return windowSize;
+    }
+
     [[nodiscard]] HWND GetWindowHandle() const {
         return windowHandle;
+    }
+
+    [[nodiscard]] GLFWwindow *GetCurrentGlfwWindow() const {
+        return window;
     }
 };

@@ -51,7 +51,7 @@ public:
         dx::ComPtr<IDXGISwapChain1> swapChain1;
 
         DX_CHECK(ctx.dx.factory->CreateSwapChainForHwnd(
-            &renderSystem.GetDxQueues().GetGraphicsQueue(),
+            renderSystem.GetDxQueues().GetGraphicsQueue(),
             windowHandle,
             &scDesc,
             nullptr,
@@ -96,12 +96,23 @@ public:
         return renderTargets[currentBackBufferIndex].Get();
     }
 
-    [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRTV() const {
+    [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRtv() const {
         return CD3DX12_CPU_DESCRIPTOR_HANDLE(
             rtvHeap->GetCPUDescriptorHandleForHeapStart(),
             static_cast<int32_t>(currentBackBufferIndex),
             rtvDescriptorSize
         );
+    }
+
+    void Shutdown() override {
+        if (swapChain) {
+            DX_CHECK(swapChain->SetFullscreenState(FALSE, nullptr));
+        }
+        for (auto &renderTarget: renderTargets) {
+            renderTarget.Reset();
+        }
+
+        swapChain.Reset();
     }
 
 private:
@@ -120,6 +131,7 @@ private:
         uint32_t i = 0;
         for (auto &target: renderTargets) {
             DX_CHECK(swapChain->GetBuffer(i++, IID_PPV_ARGS(&target)));
+            DX_CHECK(target->SetName(L"SwapChain_BackBuffer"));
             device->CreateRenderTargetView(target.Get(), nullptr, rtvHandle);
             rtvHandle.Offset(1, rtvDescriptorSize);
         }

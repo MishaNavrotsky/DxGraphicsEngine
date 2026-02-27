@@ -27,6 +27,9 @@ struct BindlessHeapConfig {
     uint32_t dynamicCapacityPerFrame = 100000;
 };
 
+struct CommandListsConfig {
+};
+
 struct EngineConfig {
 };
 
@@ -36,4 +39,5 @@ struct EngineConfigs {
     UIConfig uiConfig;
     BindlessHeapConfig bindlessHeapConfig;
     EngineConfig engineConfig;
+    CommandListsConfig commandListsConfig;
 };

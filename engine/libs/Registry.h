@@ -36,6 +36,11 @@ public:
     }
 
     template<typename T>
+    void Remove() {
+        items.erase(typeid(T));
+    }
+
+    template<typename T>
     T *GetMaybe() {
         const auto it = items.find(typeid(T));
         if (it == items.end()) {

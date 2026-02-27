@@ -10,7 +10,8 @@
 
 
 struct DxContext {
-    dx::ComPtr<ID3D12Device> device;
+    dx::ComPtr<ID3D12Device10> device;
+    dx::ComPtr<ID3D12Device10> device10;
     dx::ComPtr<IDXGIFactory6> factory;
     dx::ComPtr<IDXGIAdapter4> adapter;
     dx::ComPtr<D3D12MA::Allocator> allocator;

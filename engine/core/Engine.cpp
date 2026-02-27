@@ -44,17 +44,15 @@ struct Engine::Impl {
             }
         }
         DX_CHECK(adapter.As(&contextInternal.dx.adapter));
+        dx::ComPtr<ID3D12Device> baseDevice;
         DX_CHECK(
-            D3D12CreateDevice(contextInternal.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&contextInternal.dx
-                .device)));
+            D3D12CreateDevice(contextInternal.dx.adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&baseDevice)));
+        DX_CHECK(baseDevice.As(&contextInternal.dx.device));
     }
 
     void InitializeSystems() {
         auto &windowSystem = context.systems.Register<WindowSystem>();
         windowSystem.Initialize(contextInternal, context.configs);
-
-        auto &inputSystem = context.systems.Register<InputSystem>(windowSystem);
-        inputSystem.Initialize(contextInternal, context.configs);
 
         auto &renderSystem = context.systems.Register<RenderSystem>();
         renderSystem.Initialize(contextInternal, context.configs);
@@ -62,10 +60,34 @@ struct Engine::Impl {
         auto &swapChainSystem = context.systems.Register<SwapChainSystem>(renderSystem, windowSystem.GetWindowHandle());
         swapChainSystem.Initialize(contextInternal, context.configs);
 
+        auto &inputSystem = context.systems.Register<InputSystem>(windowSystem);
+        inputSystem.Initialize(contextInternal, context.configs);
+
         if (context.configs.uiConfig.enabled) {
             auto &uiSystem = context.systems.Register<EditorUISystem>(windowSystem, renderSystem);
             uiSystem.Initialize(contextInternal, context.configs);
         }
+    }
+
+    void ShutdownSystems() {
+        if (context.configs.uiConfig.enabled) {
+            auto *uiSystem = context.systems.GetMaybe<EditorUISystem>();
+            if (uiSystem) {
+                uiSystem->Shutdown();
+            }
+        }
+
+        auto &swapChainSystem = context.systems.Get<SwapChainSystem>();
+        swapChainSystem.Shutdown();
+
+        auto &renderSystem = context.systems.Get<RenderSystem>();
+        renderSystem.Shutdown();
+
+        auto &inputSystem = context.systems.Get<InputSystem>();
+        inputSystem.Shutdown();
+
+        auto &windowSystem = context.systems.Get<WindowSystem>();
+        windowSystem.Shutdown();
     }
 
     void InitializeAllocator() {
@@ -142,22 +164,48 @@ Engine &Engine::Get() {
 }
 
 void Engine::Run() {
-    auto &windowSystem = instance->pimpl->context.systems.Get<WindowSystem>();
-    auto *editorUISystem = instance->pimpl->context.systems.GetMaybe<EditorUISystem>();
-
     auto &engine = instance->pimpl;
 
+    auto &windowSystem = engine->context.systems.Get<WindowSystem>();
+    auto *editorUISystem = engine->context.systems.GetMaybe<EditorUISystem>();
+    auto &renderSystem = engine->context.systems.Get<RenderSystem>();
+    auto &swapChainSystem = engine->context.systems.Get<SwapChainSystem>();
+    auto &inputSystem = engine->context.systems.Get<InputSystem>();
+
     while (!engine->contextInternal.stopToken.stop_requested()) {
+        windowSystem.PollEvents();
         if (windowSystem.ShouldWindowClose()) {
             engine->stopSource.request_stop();
             //TODO: may have to do cleanup here
             continue;
         }
-        windowSystem.PollEvents();
+
+        if (windowSystem.GetWindowSize()[0] != engine->context.configs.window.width || windowSystem.GetWindowSize()[1]
+            != engine->context.configs.window.height) {
+            swapChainSystem.Resize(engine->contextInternal.dx.device.Get(), windowSystem.GetWindowSize()[0],
+                                   windowSystem.GetWindowSize()[1]);
+            engine->context.configs.window.width = windowSystem.GetWindowSize()[0];
+            engine->context.configs.window.height = windowSystem.GetWindowSize()[1];
+        }
+
+        renderSystem.BeginFrame(engine->contextInternal);
+        auto &commandList = renderSystem.GetCommandLists().GetCommandListDirect();
+        commandList.TransitionBackBuffer(swapChainSystem.GetCurrentBackBuffer(), true);
 
         if (editorUISystem) {
-            // editorUISystem->BeginFrame(engine->contextInternal);
+            constexpr float clearColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+            commandList.ClearRenderTarget(swapChainSystem.GetCurrentRtv(), clearColor);
+            commandList.SetRenderTarget(swapChainSystem.GetCurrentRtv());
+            editorUISystem->BeginFrame(engine->contextInternal);
+            editorUISystem->EndFrame(engine->contextInternal,
+                                     renderSystem.GetCommandLists().GetCommandListDirect().GetRawList());
         }
+
+        commandList.TransitionBackBuffer(swapChainSystem.GetCurrentBackBuffer(), false);
+        renderSystem.EndFrame(engine->contextInternal);
+        swapChainSystem.Present(engine->context.configs.window);
+        renderSystem.SignalQueue();
+        renderSystem.WaitForFrame();
     }
     windowSystem.CloseWindow();
 }
@@ -168,5 +216,5 @@ void Engine::Shutdown() {
     if (instance->pimpl->adapterDebugThread.joinable()) instance->pimpl->adapterDebugThread.join();
 #endif
     instance->pimpl->stopSource.request_stop();
-    for (const auto &val: instance->pimpl->context.systems.GetItems() | std::views::values) val->Shutdown();
+    instance->pimpl->ShutdownSystems();
 }
