@@ -17,7 +17,7 @@ add_library(Engine STATIC
         core/Engine.h
         core/Engine.cpp
         systems/render/RenderSystem.h
-        systems/ui/EditorUISystem.h
+        systems/ui/RenderUISystem.h
         libs/Allocators.h
         libs/DescriptorHeaps.h
         core/EngineConfigs.h

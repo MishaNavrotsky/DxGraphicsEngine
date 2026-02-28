@@ -4,7 +4,10 @@
 
 #include "engine/core/Engine.h"
 
+#include <stop_token>
+#include <thread>
 #include <ranges>
+#include <third_party/enkiTS/TaskScheduler.h>
 
 #include "EngineContext.h"
 #include "engine/DxUtils.h"
@@ -15,12 +18,17 @@
 #include "engine/systems/window/SwapChainSystem.h"
 #include "engine/systems/window/WindowSystem.h"
 #include "engine/systems/render/RenderSystem.h"
-#include "engine/systems/ui/EditorUISystem.h"
+#include "engine/systems/ui/RenderUISystem.h"
 
 struct Engine::Impl {
     EngineContext context;
     EngineContextInternal contextInternal;
     std::stop_source stopSource;
+    enki::TaskScheduler taskScheduler{};
+
+    void InitializeTaskScheduler() {
+        taskScheduler.Initialize();
+    }
 
     void InitializeContext() {
         contextInternal.stopToken = stopSource.get_token();
@@ -64,16 +72,16 @@ struct Engine::Impl {
         inputSystem.Initialize(contextInternal, context.configs);
 
         if (context.configs.uiConfig.enabled) {
-            auto &uiSystem = context.systems.Register<EditorUISystem>(windowSystem, inputSystem, renderSystem);
-            uiSystem.Initialize(contextInternal, context.configs);
+            auto &renderUISystem = context.systems.Register<RenderUISystem>(windowSystem, inputSystem, renderSystem);
+            renderUISystem.Initialize(contextInternal, context.configs);
         }
     }
 
     void ShutdownSystems() {
         if (context.configs.uiConfig.enabled) {
-            auto *uiSystem = context.systems.GetMaybe<EditorUISystem>();
-            if (uiSystem) {
-                uiSystem->Shutdown();
+            auto *renderUISystem = context.systems.GetMaybe<RenderUISystem>();
+            if (renderUISystem) {
+                renderUISystem->Shutdown();
             }
         }
 
@@ -149,6 +157,7 @@ void Engine::Initialize() {
     if (instance) return;
 
     instance = std::unique_ptr<Engine>(new Engine());
+    instance->pimpl->InitializeTaskScheduler();
     instance->pimpl->InitializeAdapter();
     instance->pimpl->InitializeAllocator();
     instance->pimpl->InitializeContext();
@@ -167,7 +176,7 @@ void Engine::Run() {
     auto &engine = instance->pimpl;
 
     auto &windowSystem = engine->context.systems.Get<WindowSystem>();
-    auto *editorUISystem = engine->context.systems.GetMaybe<EditorUISystem>();
+    auto *renderUISystem = engine->context.systems.GetMaybe<RenderUISystem>();
     auto &renderSystem = engine->context.systems.Get<RenderSystem>();
     auto &swapChainSystem = engine->context.systems.Get<SwapChainSystem>();
     auto &inputSystem = engine->context.systems.Get<InputSystem>();
@@ -180,24 +189,23 @@ void Engine::Run() {
             continue;
         }
 
-        if (windowSystem.GetWindowSize()[0] != engine->context.configs.window.width || windowSystem.GetWindowSize()[1]
-            != engine->context.configs.window.height) {
-            swapChainSystem.Resize(engine->contextInternal.dx.device.Get(), windowSystem.GetWindowSize()[0],
-                                   windowSystem.GetWindowSize()[1]);
-            engine->context.configs.window.width = windowSystem.GetWindowSize()[0];
-            engine->context.configs.window.height = windowSystem.GetWindowSize()[1];
+        if (windowSystem.GetWindowSize() != engine->context.configs.window.size) {
+            ENG_LOG_INFO("[Engine] Resize called");
+            const auto newSize = windowSystem.GetWindowSize();
+            swapChainSystem.Resize(engine->contextInternal.dx.device.Get(), newSize);
+            engine->context.configs.window.size = newSize;
         }
 
         renderSystem.BeginFrame(engine->contextInternal);
         auto &commandList = renderSystem.GetCommandLists().GetCommandListDirect();
         commandList.TransitionBackBuffer(swapChainSystem.GetCurrentBackBuffer(), true);
 
-        if (editorUISystem) {
+        if (renderUISystem) {
             constexpr float clearColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
             commandList.ClearRenderTarget(swapChainSystem.GetCurrentRtv(), clearColor);
             commandList.SetRenderTarget(swapChainSystem.GetCurrentRtv());
-            editorUISystem->BeginFrame(engine->contextInternal);
-            editorUISystem->EndFrame(engine->contextInternal,
+            renderUISystem->BeginFrame(engine->contextInternal);
+            renderUISystem->EndFrame(engine->contextInternal,
                                      renderSystem.GetCommandLists().GetCommandListDirect().GetRawList());
         }
 
@@ -216,5 +224,6 @@ void Engine::Shutdown() {
     if (instance->pimpl->adapterDebugThread.joinable()) instance->pimpl->adapterDebugThread.join();
 #endif
     instance->pimpl->stopSource.request_stop();
+    instance->pimpl->taskScheduler.WaitforAllAndShutdown();
     instance->pimpl->ShutdownSystems();
 }

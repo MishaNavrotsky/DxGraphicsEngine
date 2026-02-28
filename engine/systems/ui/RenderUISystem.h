@@ -74,7 +74,7 @@ inline ImGuiKey MapGlfwKeyToImGui(int32_t key) {
     }
 }
 
-class EditorUISystem : public SystemBase {
+class RenderUISystem : public SystemBase {
     WindowSystem &windowSystem;
     RenderSystem &renderSystem;
     InputSystem &inputSystem;
@@ -84,7 +84,7 @@ class EditorUISystem : public SystemBase {
     const uint32_t DescriptorHeapSize = 256;
 
 public:
-    explicit EditorUISystem(WindowSystem &window, InputSystem &inputSystem, RenderSystem &renderSystem
+    explicit RenderUISystem(WindowSystem &window, InputSystem &inputSystem, RenderSystem &renderSystem
     ) : windowSystem(window), inputSystem(inputSystem),
 
         renderSystem(renderSystem) {
@@ -114,7 +114,7 @@ public:
         init_info.SrvDescriptorHeap = renderSystem.GetDescriptorHeap().Get();
         init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo *info, D3D12_CPU_DESCRIPTOR_HANDLE *out_cpu_handle,
                                             D3D12_GPU_DESCRIPTOR_HANDLE *out_gpu_handle) {
-            auto &uiSystem = *static_cast<EditorUISystem *>(info->UserData);
+            auto &uiSystem = *static_cast<RenderUISystem *>(info->UserData);
 
             *out_cpu_handle = {
                 uiSystem.descriptorHandle.startCpu.ptr + uiSystem.allocator.currentOffset * uiSystem.renderSystem.

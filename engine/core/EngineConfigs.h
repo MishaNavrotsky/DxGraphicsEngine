@@ -8,8 +8,17 @@
 
 constexpr const uint32_t FramesInFlightCount = 3;
 
+struct WindowSize {
+    std::int32_t width;
+    std::int32_t height;
+
+    bool operator==(const WindowSize &other) const {
+        return width == other.width && height == other.height;
+    }
+};
+
 struct WindowConfig {
-    std::uint32_t width = 1280, height = 720;
+    WindowSize size{.width = 1920, .height = 1080};
     bool vsync = false;
 };
 

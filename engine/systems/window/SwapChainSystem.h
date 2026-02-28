@@ -22,8 +22,8 @@ class SwapChainSystem : public SystemBase {
 
     void buildSwapChainDesc(const EngineConfigs &configs) {
         scDesc = {
-            .Width = std::max(1u, configs.window.width),
-            .Height = std::max(1u, configs.window.height),
+            .Width = std::max(1u, static_cast<uint32_t>(configs.window.size.width)),
+            .Height = std::max(1u, static_cast<uint32_t>(configs.window.size.height)),
             .Format = SwapChainFormat,
             .SampleDesc = {.Count = 1, .Quality = 0},
             .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
@@ -71,10 +71,9 @@ public:
         currentBackBufferIndex = swapChain->GetCurrentBackBufferIndex();
     }
 
-    void Resize(ID3D12Device *device, uint32_t width, uint32_t height) {
-        width = std::max(1u, width);
-        height = std::max(1u, height);
-
+    void Resize(ID3D12Device *device, const WindowSize size) {
+        const uint32_t width = std::max(1, size.width);
+        const uint32_t height = std::max(1, size.height);
         for (auto &target: renderTargets) {
             target.Reset();
         }
